@@ -165,7 +165,7 @@
           <div class="spec-title">What the 8am job checks</div>
           <div class="spec-scroll">
             <table>
-              <tr><td>OS packages</td><td><code>apt list --upgradable</code></td></tr>
+              <tr><td>OS packages</td><td><code>apt list --upgradable</code> — names each package and its version transition, not just a count</td></tr>
               <tr><td>Pending reboot</td><td><code>/var/run/reboot-required</code> present</td></tr>
               <tr><td>CLI tool</td><td><code>npm outdated -g</code> for gemini-cli — not apt-managed, needs its own check</td></tr>
               <tr><td>Claude Code itself</td><td>installed version vs. <code>npm view @anthropic-ai/claude-code version</code> — Anthropic's native installer isn't apt- or npm-managed either, but the npm registry's published version tracks it 1:1</td></tr>
