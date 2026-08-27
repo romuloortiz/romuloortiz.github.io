@@ -23,7 +23,7 @@
       <div class="stat"><div class="v">2C·4T</div><div class="l">CPU, 8→16GB RAM</div></div>
       <div class="stat"><div class="v">1TB + 250GB</div><div class="l">RAID1 + backup disk</div></div>
       <div class="stat"><div class="v">3 people</div><div class="l">onboarded to Nextcloud</div></div>
-      <div class="stat"><div class="v">4 services</div><div class="l">retired: Photos, Drive, iCloud, Dropbox</div></div>
+      <div class="stat"><div class="v">4 subscriptions</div><div class="l">retired: Google One, iCloud, Dropbox, Quicken</div></div>
     </div>
   </header>
 
@@ -37,6 +37,7 @@
       <a href="#monitoring"><span class="n">06</span> Alerting</a>
       <a href="#backup"><span class="n">07</span> Backups</a>
       <a href="#updates"><span class="n">08</span> Staying current</a>
+      <a href="#firefly"><span class="n">09</span> Firefly III</a>
     </nav>
 
     <main class="stages">
@@ -111,7 +112,7 @@
       <section class="stage" id="nextcloud">
         <div class="stage-head"><span class="stage-num">05</span><h2>Nextcloud: the subscription killer</h2></div>
         <p>Nextcloud runs in Docker, with its file storage pointed straight at the RAID1 mount — so every photo and document rides on mirrored disks from day one, not as an afterthought. Three accounts are set up: the two parents and a 14-year-old son.</p>
-        <p class="tight">Photo libraries have already been migrated in from <strong>iCloud</strong> and <strong>Google Photos</strong>; a Dropbox migration is next in the queue. Once that's done, one self-hosted app will have fully replaced four separate paid or freemium services — Google Photos, Google Drive, iCloud storage, and Dropbox — for the cost of the electricity to run the box.</p>
+        <p class="tight">Photo libraries have already been migrated in from <strong>iCloud</strong> and <strong>Google Photos</strong>; a Dropbox migration is next in the queue. Once that's done, one self-hosted app will have fully replaced three separate subscriptions — <strong>Google One</strong> (the one plan covering both Google Photos and Google Drive — they're not two subscriptions, just two faces of the same one), <strong>iCloud</strong> storage, and <strong>Dropbox</strong> — for the cost of the electricity to run the box.</p>
       </section>
 
       <section class="stage" id="monitoring">
@@ -141,26 +142,28 @@
 
       <section class="stage" id="backup">
         <div class="stage-head"><span class="stage-num">07</span><h2>Backup strategy</h2></div>
-        <p>Nightly at 3am, a script backs up both the Nextcloud files and the database — separately, on purpose — to the dedicated 250GB drive using <strong>restic</strong>:</p>
+        <p>Nightly at 3am, a script backs up Nextcloud's files and database, then (added once Firefly III joined the box — see stage 09) Firefly's uploaded attachments and its own database, each kept separate on purpose, to the dedicated 250GB drive using <strong>restic</strong>:</p>
         <div class="spec">
           <div class="spec-title">Nightly backup sequence</div>
           <div class="spec-scroll">
             <table>
-              <tr><td>1</td><td><code>mysqldump</code> the full database to a fixed filename</td></tr>
+              <tr><td>1</td><td><code>mysqldump</code> both apps' databases to fixed filenames</td></tr>
               <tr><td>2</td><td><code>restic backup</code> the Nextcloud data on the RAID (tagged separately)</td></tr>
-              <tr><td>3</td><td><code>restic backup</code> the database dump (tagged separately)</td></tr>
-              <tr><td>4</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly</td></tr>
-              <tr><td>5</td><td>One ntfy notification with both sizes, success or fail</td></tr>
+              <tr><td>3</td><td><code>restic backup</code> the Nextcloud database dump (tagged separately)</td></tr>
+              <tr><td>4</td><td><code>restic backup</code> Firefly's uploaded attachments on the RAID (tagged separately)</td></tr>
+              <tr><td>5</td><td><code>restic backup</code> the Firefly database dump (tagged separately)</td></tr>
+              <tr><td>6</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly, across all four categories</td></tr>
+              <tr><td>7</td><td>One ntfy notification with all four sizes, success or fail</td></tr>
             </table>
           </div>
         </div>
-        <p class="tight">Splitting data and database into two restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if the database dump quietly went to zero bytes while the file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed.</p>
+        <p class="tight">Splitting each app's data and database into their own restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — adding Firefly meant extending the existing run rather than standing up a second parallel backup system.</p>
         <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete, a ransomware scenario, or the whole enclosure failing at once. The one gap left is offsite: a second copy pushed to a remote machine over the same Tailscale network, for a proper 3‑2‑1, isn't built yet.</p>
       </section>
 
       <section class="stage" id="updates">
         <div class="stage-head"><span class="stage-num">08</span><h2>Staying current: six update systems, one push</h2></div>
-        <p>A server that's up doesn't mean a server that's current. OS packages, two hand-installed CLI tools, six Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
+        <p>A server that's up doesn't mean a server that's current. OS packages, two hand-installed CLI tools, eight Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
         <div class="spec">
           <div class="spec-title">What the 8am job checks</div>
           <div class="spec-scroll">
@@ -169,7 +172,7 @@
               <tr><td>Pending reboot</td><td><code>/var/run/reboot-required</code> present</td></tr>
               <tr><td>CLI tool</td><td><code>npm outdated -g</code> for gemini-cli — not apt-managed, needs its own check</td></tr>
               <tr><td>Claude Code itself</td><td>installed version vs. <code>npm view @anthropic-ai/claude-code version</code> — Anthropic's native installer isn't apt- or npm-managed either, but the npm registry's published version tracks it 1:1</td></tr>
-              <tr><td>6 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes</td></tr>
+              <tr><td>8 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes; now covers Firefly III's app + DB too</td></tr>
               <tr><td>Nextcloud apps</td><td><code>occ update:check</code> inside the container — apps version through the app store, not the image</td></tr>
             </table>
           </div>
@@ -254,7 +257,54 @@
             </ol>
           </details>
 
+          <details>
+            <summary><span class="cmd">/update-firefly</span><span class="desc">Firefly III app container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — a new Firefly release can carry a database migration.</li>
+              <li><code>docker compose pull app</code>.</li>
+              <li><code>docker compose up -d app</code> — recreate on the new image (uploaded attachments live on the RAID, untouched by the swap).</li>
+              <li>Confirm health: <code>curl localhost:8083/health</code> returns <code>OK</code> — this endpoint runs a real database query, not just a process check.</li>
+              <li>Check the logs for a migration that <em>completed</em> rather than got stuck, then report the before/after image digest.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-firefly-db</span><span class="desc">Firefly III's MariaDB container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — this container holds live financial data.</li>
+              <li><code>docker compose pull db</code>.</li>
+              <li><code>docker compose up -d db</code> — recreate (the data dir lives on the RAID, untouched by the swap).</li>
+              <li>Confirm Firefly can still reach it: <code>curl localhost:8083/health</code> returns <code>OK</code>.</li>
+              <li>Report the before/after digest, and confirm the pre-update backup completed before declaring this done.</li>
+            </ol>
+          </details>
+
         </div>
+      </section>
+
+      <section class="stage" id="firefly">
+        <div class="stage-head"><span class="stage-num">09</span><h2>Firefly III: the Quicken killer</h2></div>
+        <p>The newest addition, and the reason the subscription count in the header didn't stop at three: <strong>Firefly III</strong>, a self-hosted, double-entry personal finance manager, replacing a Quicken subscription the same way Nextcloud replaced the cloud-storage stack — one self-hosted app, zero recurring cost.</p>
+        <div class="spec">
+          <div class="spec-title">Three containers, same shape as Nextcloud plus one extra</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>app</td><td>The web app itself — same db+app split Nextcloud uses</td></tr>
+              <tr><td>db</td><td>MariaDB, pinned to the same tag Nextcloud's DB already uses, so only one image tag needs tracking instead of two</td></tr>
+              <tr><td>cron</td><td>A tiny container whose only job is pinging Firefly's own cron endpoint once a day, for recurring transactions and scheduled rules — Nextcloud doesn't need this piece, Firefly ships it as part of its own recommended setup</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="tight">Uploaded attachments and the database both live on the RAID mount, not a Docker-managed volume — the same "data lives where it can actually be backed up" rule Nextcloud follows — which is also why Firefly slotted straight into the existing nightly backup run (see stage 07) instead of needing a system of its own.</p>
+        <div class="callout alert">
+          <span class="tag">Environment quirk — sudo has no terminal here</span>
+          <p>Creating the RAID-side data directories needed <code>sudo</code>, and it turned out neither an automated command nor even the human typing it directly into the same terminal session could get sudo a real controlling TTY to authenticate against — a hard limitation of this particular setup, not a permissions mistake. The fix was mundane: open a genuinely separate terminal, outside that session entirely, and run it there. Worth remembering before assuming any future <code>sudo</code> step will just work the same way everything else here does.</p>
+        </div>
+        <div class="callout">
+          <span class="tag">A health check that actually checks something</span>
+          <p>Firefly ships a dedicated <code>GET /health</code> route that runs a real database query (not just "is the process alive") and returns plain-text <code>OK</code>. Plain text, notably — not JSON like the other services' health checks, which matters for wiring it into Uptime Kuma: it needs an <strong>HTTP(s) - Keyword</strong> monitor (keyword <code>OK</code>), not a JSON Query monitor, or the check would fail to parse a response that was never JSON in the first place. Docker Container monitors cover all three containers the same way Nextcloud's two do.</p>
+        </div>
+        <p class="tight">First boot took several minutes longer than Nextcloud's did — not a hang, just Firefly running its entire historical migration-and-upgrade chain in sequence on what was, seconds earlier, an empty database. Steady progress in the logs, not silence, is what that looks like from the outside.</p>
       </section>
 
     </main>
