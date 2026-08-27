@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home Lab Build Log</title>
+<meta name="description" content="How a self-hosted home server came together: the hardware, the network, the storage, and the alarms that go off when something's wrong.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="site-nav"><a href="index.html">&larr; Romulo Ortiz</a></nav>
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Home Lab — Build Log</p>
+    <h1>Four subscriptions, replaced by one box on a shelf.</h1>
+    <p class="dek">How the home server came together: the hardware, the network, the storage, and the alarms that go off when something's wrong — written up for anyone curious enough to build their own.</p>
+    <div class="stats">
+      <div class="stat"><div class="v">$0/mo</div><div class="l">recurring cost</div></div>
+      <div class="stat"><div class="v">$234.65</div><div class="l">total cost, incl. 2020 hardware</div></div>
+      <div class="stat"><div class="v">2C·4T</div><div class="l">CPU, 8→16GB RAM</div></div>
+      <div class="stat"><div class="v">1TB + 250GB</div><div class="l">RAID1 + backup disk</div></div>
+      <div class="stat"><div class="v">3 people</div><div class="l">onboarded to Nextcloud</div></div>
+      <div class="stat"><div class="v">4 services</div><div class="l">retired: Photos, Drive, iCloud, Dropbox</div></div>
+    </div>
+  </header>
+
+  <div class="body-grid">
+    <nav class="rail" aria-label="Build stages">
+      <a href="#machine"><span class="n">01</span> The machine</a>
+      <a href="#os"><span class="n">02</span> Ubuntu</a>
+      <a href="#network"><span class="n">03</span> Tailscale</a>
+      <a href="#ssh"><span class="n">04</span> Remote access</a>
+      <a href="#nextcloud"><span class="n">05</span> Nextcloud</a>
+      <a href="#monitoring"><span class="n">06</span> Alerting</a>
+      <a href="#backup"><span class="n">07</span> Backups</a>
+      <a href="#updates"><span class="n">08</span> Staying current</a>
+    </nav>
+
+    <main class="stages">
+
+      <section class="stage" id="machine">
+        <div class="stage-head"><span class="stage-num">01</span><h2>The machine</h2></div>
+        <p>Nothing exotic, and not a fresh purchase either — the core of this box is a mini PC that's been running since 2020, given a second job instead of a trip to e-waste. It runs 24/7 in a closet, which is really the whole trick: the value of a home lab is uptime, not horsepower, and this hardware still has plenty of the former left in it.</p>
+        <div class="callout">
+          <span class="tag">Second life, not a purpose-bought server</span>
+          <p>The mini PC and its SSD go back to 2020, bought as an everyday Windows 10 desktop — nothing to do with this project at the time. When its CPU generation turned out to fall just short of Windows 11's hardware requirements, it was headed for e-waste for a licensing reason, not a broken one: nothing about the machine had actually failed. Wiped, put on Ubuntu, and repointed at a job it's genuinely well-suited for — sitting in a closet running lightweight services 24/7 — it got years of useful life back instead of a landfill. Everything else in the build below (RAM, the RAID enclosure, the data drive) was bought new, specifically for this.</p>
+        </div>
+        <div class="spec">
+          <div class="spec-title">Hardware</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>CPU</td><td>2 cores / 4 threads</td></tr>
+              <tr><td>Memory</td><td>7GB now, 16GB stick landing 2026‑08‑28</td></tr>
+              <tr><td>OS disk</td><td>223GB SSD — LUKS‑encrypted (dm‑crypt + LVM)</td></tr>
+              <tr><td>Data disk</td><td>1TB hardware RAID1 enclosure, 2 disks mirrored → ~916GB usable, ext4</td></tr>
+              <tr><td>Backup disk</td><td>250GB external USB HDD — pulled from a drawer, dedicated to backups only</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="tight">Three separate drives, three separate jobs: the OS lives on its own encrypted disk so a stolen or discarded drive doesn't leak anything; the RAID1 volume holds the data that actually matters and survives a single-disk failure; the USB drive never holds anything except backups, so a bad <code>rm -rf</code> on the main box can't take the backup with it.</p>
+        <div class="spec">
+          <div class="spec-title">Build cost</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>Mini PC · 2020</td><td>Zotac ZBOX‑MI522NANO — i3‑5010U, 8GB RAM, no drive</td><td>$101.12</td></tr>
+              <tr><td>OS drive · 2020</td><td>ADATA SU635 240GB SATA SSD</td><td>$29.67</td></tr>
+              <tr><td>RAM upgrade</td><td>Timetec 8GB DDR3L SODIMM (→ 16GB total)</td><td>$22.25</td></tr>
+              <tr><td>RAID enclosure</td><td>CENMATE 2‑bay USB 3.0 enclosure</td><td>$34.97</td></tr>
+              <tr><td>Data drives</td><td>2× HP 1TB 7200RPM SATA HDD — the RAID1 mirror pair</td><td>$46.64</td></tr>
+              <tr class="total"><td>Total</td><td></td><td>$234.65</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="tight">The "2020" rows are what those two parts actually cost back then, carried forward for a true total rather than pretending this was a from-scratch build — the mini PC and its SSD were already doing a different job (see above). RAM, the RAID enclosure, and both mirror-pair data drives were the real new spend, bought specifically to turn a retired desktop into a server. The 250GB backup drive and the router it sits behind weren't bought at all — the drive had been sitting in a drawer collecting dust for years, which is most of how <a href="#backup">a real 3‑2‑1 backup setup</a> ended up costing nothing extra on top of the numbers above. Tax included where the receipt broke it out; call it a rounding error either way.</p>
+      </section>
+
+      <section class="stage" id="os">
+        <div class="stage-head"><span class="stage-num">02</span><h2>Ubuntu, and why it's boring on purpose</h2></div>
+        <p>Running <strong>Ubuntu 26.04.1 LTS</strong> ("Resolute Raccoon"). LTS specifically — a five-year support window means this box can sit unattended for years without an OS-level end-of-life forcing a rebuild, which matters a lot more on a machine nobody looks at daily than it does on a laptop.</p>
+        <p class="tight">The other reason is unglamorous but real: when something breaks at 11pm, Ubuntu has the largest pile of Stack Overflow answers of any Linux distro. For a one-person ops team, that's worth more than any technical edge a more "correct" distro might offer.</p>
+      </section>
+
+      <section class="stage" id="network">
+        <div class="stage-head"><span class="stage-num">03</span><h2>Networking: Tailscale instead of port-forwarding</h2></div>
+        <p>The box joined a personal <strong>Tailscale</strong> network — a mesh VPN built on WireGuard. Every device that needs to reach the server (laptop, phone, tablet) gets its own private key and its own <code>100.x.x.x</code> address on the tailnet; the devices talk to each other directly over an encrypted tunnel, brokered by Tailscale's coordination servers but never routed through them.</p>
+        <div class="callout">
+          <span class="tag">Security consideration</span>
+          <p>Zero inbound ports are opened on the home router. There is nothing for a port scanner to find, because there is nothing listening on the public internet at all — every service (SSH, Nextcloud, the dashboards) is reachable only from devices already authenticated into the tailnet. That's a meaningfully smaller attack surface than the traditional homelab approach of forwarding ports through the router and locking things down with a firewall and fail2ban after the fact.</p>
+        </div>
+        <p class="tight">It also scales for free: the personal plan covers up to 5 people with no cap on devices per person. Right now the tailnet already has 3 logins and 8 devices on it — laptops, phones, a tablet — at zero cost.</p>
+        <div class="mesh">
+          <span class="chip you">home-server</span>
+          <span class="chip">iphone</span>
+          <span class="chip">ipad</span>
+          <span class="chip">macbook</span>
+          <span class="chip">imac</span>
+          <span class="chip">windows pc</span>
+          <span class="chip">android</span>
+          <span class="chip">+ 2 more</span>
+        </div>
+      </section>
+
+      <section class="stage" id="ssh">
+        <div class="stage-head"><span class="stage-num">04</span><h2>Remote access via SSH</h2></div>
+        <p>With the tailnet in place, <code>openssh-server</code> went on next — this is what actually lets the box get administered from anywhere, instead of requiring a keyboard plugged into it. The daemon itself binds normally; what makes it safe is that nothing upstream ever forwards a connection to it from the open internet, so in practice it's reachable only over the tailnet's private address space, from devices that are already trusted.</p>
+      </section>
+
+      <section class="stage" id="nextcloud">
+        <div class="stage-head"><span class="stage-num">05</span><h2>Nextcloud: the subscription killer</h2></div>
+        <p>Nextcloud runs in Docker, with its file storage pointed straight at the RAID1 mount — so every photo and document rides on mirrored disks from day one, not as an afterthought. Three accounts are set up: the two parents and a 14-year-old son.</p>
+        <p class="tight">Photo libraries have already been migrated in from <strong>iCloud</strong> and <strong>Google Photos</strong>; a Dropbox migration is next in the queue. Once that's done, one self-hosted app will have fully replaced four separate paid or freemium services — Google Photos, Google Drive, iCloud storage, and Dropbox — for the cost of the electricity to run the box.</p>
+      </section>
+
+      <section class="stage" id="monitoring">
+        <div class="stage-head"><span class="stage-num">06</span><h2>Alerting: three containers, three different questions</h2></div>
+        <p>A server nobody's watching is a server that fails silently. Three small containers each answer a different question, and all of them funnel into the same place:</p>
+        <div class="spec">
+          <div class="spec-title">Monitoring containers</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>Beszel</td><td>Is the hardware healthy? — CPU, RAM, disk, temperature, per‑container stats</td></tr>
+              <tr><td>Uptime Kuma</td><td>Are the apps actually working? — 6 container checks, 3 real HTTP health‑check queries, 1 outbound ping to tell "server's down" apart from "internet's down"</td></tr>
+              <tr><td>ntfy</td><td>The delivery pipe — the one channel every alert, from either tool (or a cron job), gets pushed through</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="flow">
+          <span class="box">Beszel</span><span class="arrow">＋</span><span class="box">Uptime Kuma</span><span class="arrow">＋</span><span class="box">cron</span>
+          <span class="arrow">→</span><span class="box hub">ntfy (self‑hosted)</span>
+          <span class="arrow">→ over Tailscale →</span><span class="box">iPhone</span>
+        </div>
+        <p class="tight">ntfy itself is self-hosted with no public address, so the phone subscribes to it over the tailnet's private hostname. The one subtlety: getting real background push on iOS required routing through the public <code>ntfy.sh</code> purely as a relay to wake Apple's push service — a self-hosted server has no way to talk to APNs directly, so ntfy.sh does that one hop on its behalf while every actual message still originates and stays on the home server.</p>
+        <div class="callout">
+          <span class="tag">Cron-driven, on purpose split two ways</span>
+          <p>An 8am job bundles five separate staleness checks — OS packages and a pending-reboot flag, plus three more added later (next section) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
+        </div>
+      </section>
+
+      <section class="stage" id="backup">
+        <div class="stage-head"><span class="stage-num">07</span><h2>Backup strategy</h2></div>
+        <p>Nightly at 3am, a script backs up both the Nextcloud files and the database — separately, on purpose — to the dedicated 250GB drive using <strong>restic</strong>:</p>
+        <div class="spec">
+          <div class="spec-title">Nightly backup sequence</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>1</td><td><code>mysqldump</code> the full database to a fixed filename</td></tr>
+              <tr><td>2</td><td><code>restic backup</code> the Nextcloud data on the RAID (tagged separately)</td></tr>
+              <tr><td>3</td><td><code>restic backup</code> the database dump (tagged separately)</td></tr>
+              <tr><td>4</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly</td></tr>
+              <tr><td>5</td><td>One ntfy notification with both sizes, success or fail</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="tight">Splitting data and database into two restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if the database dump quietly went to zero bytes while the file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed.</p>
+        <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete, a ransomware scenario, or the whole enclosure failing at once. The one gap left is offsite: a second copy pushed to a remote machine over the same Tailscale network, for a proper 3‑2‑1, isn't built yet.</p>
+      </section>
+
+      <section class="stage" id="updates">
+        <div class="stage-head"><span class="stage-num">08</span><h2>Staying current: five update systems, one push</h2></div>
+        <p>A server that's up doesn't mean a server that's current. OS packages, a hand-installed CLI tool, six Docker images, and Nextcloud's own app store all drift out of date on five completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
+        <div class="spec">
+          <div class="spec-title">What the 8am job checks</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>OS packages</td><td><code>apt list --upgradable</code></td></tr>
+              <tr><td>Pending reboot</td><td><code>/var/run/reboot-required</code> present</td></tr>
+              <tr><td>CLI tool</td><td><code>npm outdated -g</code> for gemini-cli — not apt-managed, needs its own check</td></tr>
+              <tr><td>6 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes</td></tr>
+              <tr><td>Nextcloud apps</td><td><code>occ update:check</code> inside the container — apps version through the app store, not the image</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="callout">
+          <span class="tag">Why a :latest tag lies</span>
+          <p>A tag like <code>:latest</code> is a pointer, not a version number — the maintainer can rebuild and repoint it any day without the string changing at all. Comparing tags would miss that entirely, so the check instead diffs each image's actual content digest, before and after an authoritative <code>docker pull</code>, against what's running locally. Different digest, same tag, still an update.</p>
+        </div>
+        <div class="callout alert">
+          <span class="tag">Debugging story — when the check itself was lying</span>
+          <p>First real run flagged all 6 watched images as outdated. Applying them one by one told a different story: only 2 actually were. The original check peeked at the registry digest via <code>docker manifest inspect</code>, specifically to avoid downloading anything just to check — but that endpoint served a stale digest for 4 of the 6 images, a known caching quirk on Docker Hub's manifest-list responses that a plain content pull doesn't hit, since it resolves through a different, authoritative path. A monitoring check that cries wolf is worse than no check at all — a few missed alerts erode trust faster than the alerts themselves are worth — so the fix was to stop peeking and just pull for real, diffing the digest before and after. It costs a little bandwidth on nights something's actually new; every other night it's already a no-op, since the layers are already local.</p>
+        </div>
+        <p class="tight">One image doesn't fit either pattern cleanly: the Nextcloud app container. Watching that story unfold is why a plain <code>docker pull</code> was never going to be enough for it.</p>
+        <div class="callout alert">
+          <span class="tag">Debugging story — the HEIC rabbit hole</span>
+          <p>1,553 HEIC photos from a fresh iCloud import never appeared in the photo-timeline app's feed, with zero errors anywhere. Root cause: Nextcloud only enables a narrow default set of preview handlers, and the two that matter here — HEIC images and video thumbnails — aren't in it. The timeline app checks a file's format against that same enabled list before it will even index it, so every HEIC silently got skipped before its metadata was ever read. Tracing it took planting temporary log lines inside the app's own indexing code, because every layer looked fine in isolation — the image library decoded HEIC standalone without issue, it was only the combination that failed. The config fix was one line; video thumbnails needed something the base Nextcloud image doesn't ship at all: an actual <code>ffmpeg</code> binary. Installing it by hand worked until the next container restart wiped it out — so it got baked into a small custom image instead, layered on top of the official one, that survives recreation.</p>
+        </div>
+        <p class="tight">Detection and remediation still stay deliberately separate, just with one nuance: the check itself now pulls new layers when it finds a real update (that's what the fix above requires), but it never recreates a running container on its own. Each watched system gets its own one-shot runbook for that half — invoked by hand, never triggered automatically, and each one verifies itself before calling the job done rather than just trusting the pull succeeded:</p>
+        <div class="runbook">
+
+          <details>
+            <summary><span class="cmd">/update-ntfy</span><span class="desc">notification hub</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li><code>docker compose pull ntfy</code> — fetch the latest image.</li>
+              <li><code>docker compose up -d ntfy</code> — recreate the container (<code>./ntfy-data</code> is a bind mount, untouched by the swap).</li>
+              <li>Confirm health: container shows "Up", and <code>curl localhost:8081/v1/health</code> returns <code>{"healthy":true}</code>.</li>
+              <li>Send a live test push through the real topic, to confirm delivery still works end-to-end, not just that the process started.</li>
+              <li>Report the before/after image digest.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-beszel</span><span class="desc">hub + agent, together</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li><code>docker compose pull beszel beszel-agent</code> — both images, in one step, on purpose: hub and agent are the same product, and letting one drift a version behind the other risks breaking their connection.</li>
+              <li><code>docker compose up -d beszel beszel-agent</code> — recreate both.</li>
+              <li>Confirm both containers are "Up," then check the dashboard itself shows the agent still connected and reporting fresh metrics — not just stale numbers from before the restart.</li>
+              <li>Report before/after digests for both images.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-uptime-kuma</span><span class="desc">health-check dashboard</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li><code>docker compose pull uptime-kuma</code>.</li>
+              <li><code>docker compose up -d uptime-kuma</code> — recreate (<code>./uptime-kuma-data</code> holds monitor config/history as a bind mount, untouched).</li>
+              <li>Confirm it's reachable and the full existing monitor list with recent check history is still there — not silently reset by the swap.</li>
+              <li>Report the before/after image digest.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-nextcloud-db</span><span class="desc">MariaDB container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Run a fresh backup right now — on top of the nightly 3am one — and confirm it actually succeeded before touching anything. This container holds live production data.</li>
+              <li><code>docker compose pull db</code>.</li>
+              <li><code>docker compose up -d db</code> — recreate (the <code>db_data</code> named volume is untouched by an image swap).</li>
+              <li>Confirm Nextcloud can still reach it: <code>occ status</code> reports <code>"installed": true</code> with no DB connection errors.</li>
+              <li>Report the before/after digest, and confirm the pre-update backup completed before declaring this done.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-nextcloud-container</span><span class="desc">the custom ffmpeg image</span><span class="badges"><span class="badge warn">backs up first</span><span class="badge">rebuild, not pull</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — a base-image bump can carry a Nextcloud point release with a DB migration riding along.</li>
+              <li><code>docker compose build --pull</code> — the <code>--pull</code> flag is what actually fetches the newer <code>nextcloud:latest</code> base; a plain <code>build</code> would silently reuse the stale cached base layer.</li>
+              <li><code>docker compose up -d app</code> — recreate on the freshly-built image.</li>
+              <li>Confirm it came back up cleanly and check the logs for a migration that <em>completed</em> rather than got stuck — a point-release bump triggering one on first boot is expected, not a failure.</li>
+              <li>Re-verify the preview-provider config survived (<code>enabledPreviewProviders</code> still lists <code>HEIC</code> and <code>Movie</code>) and that <code>ffmpeg</code> is still on <code>$PATH</code> in the rebuilt image — both have to survive the rebuild or Memories previews silently break again.</li>
+              <li>Report the before/after digest of the <code>nextcloud:latest</code> base layer.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-nextcloud-groupware</span><span class="desc">calendar, mail, contacts, memories, recognize</span><span class="badges"><span class="badge">no Docker image involved</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li><code>occ app:update --showonly</code> — see which apps actually have a pending update.</li>
+              <li>Update each one that does (<code>occ app:update &lt;app&gt;</code>), wrapped in a timeout with a resumable-download fallback for this box's occasional stalls on large app downloads.</li>
+              <li>Confirm recognize's ML models are actually present and active — faces, imagenet, landmarks, movinet, musicnn all enabled with real last-run timestamps, not just installed; download them if missing.</li>
+              <li>Re-run <code>--showonly</code> to confirm everything's current, and report what changed vs. what was already up to date.</li>
+            </ol>
+          </details>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="closing">
+    <h3>Next up</h3>
+    <ul>
+      <li>16GB RAM upgrade lands 2026‑08‑28</li>
+      <li>Dropbox migration into Nextcloud</li>
+      <li>Offsite backup tier over Tailscale, for real 3‑2‑1 coverage</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+  var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  if (!('IntersectionObserver' in window) || !sections.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var idx = sections.indexOf(entry.target);
+      if (idx === -1) return;
+      if (entry.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove('active'); });
+        links[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(function (s) { if (s) observer.observe(s); });
+})();
+</script>
+</body>
+</html>
