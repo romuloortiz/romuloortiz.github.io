@@ -135,7 +135,7 @@
         <p class="tight">ntfy itself is self-hosted with no public address, so the phone subscribes to it over the tailnet's private hostname. The one subtlety: getting real background push on iOS required routing through the public <code>ntfy.sh</code> purely as a relay to wake Apple's push service — a self-hosted server has no way to talk to APNs directly, so ntfy.sh does that one hop on its behalf while every actual message still originates and stays on the home server.</p>
         <div class="callout">
           <span class="tag">Cron-driven, on purpose split two ways</span>
-          <p>An 8am job bundles five separate staleness checks — OS packages and a pending-reboot flag, plus three more added later (next section) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
+          <p>An 8am job bundles six separate staleness checks — OS packages and a pending-reboot flag, plus four more added later (next section) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
         </div>
       </section>
 
@@ -159,8 +159,8 @@
       </section>
 
       <section class="stage" id="updates">
-        <div class="stage-head"><span class="stage-num">08</span><h2>Staying current: five update systems, one push</h2></div>
-        <p>A server that's up doesn't mean a server that's current. OS packages, a hand-installed CLI tool, six Docker images, and Nextcloud's own app store all drift out of date on five completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
+        <div class="stage-head"><span class="stage-num">08</span><h2>Staying current: six update systems, one push</h2></div>
+        <p>A server that's up doesn't mean a server that's current. OS packages, two hand-installed CLI tools, six Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
         <div class="spec">
           <div class="spec-title">What the 8am job checks</div>
           <div class="spec-scroll">
@@ -168,6 +168,7 @@
               <tr><td>OS packages</td><td><code>apt list --upgradable</code></td></tr>
               <tr><td>Pending reboot</td><td><code>/var/run/reboot-required</code> present</td></tr>
               <tr><td>CLI tool</td><td><code>npm outdated -g</code> for gemini-cli — not apt-managed, needs its own check</td></tr>
+              <tr><td>Claude Code itself</td><td>installed version vs. <code>npm view @anthropic-ai/claude-code version</code> — Anthropic's native installer isn't apt- or npm-managed either, but the npm registry's published version tracks it 1:1</td></tr>
               <tr><td>6 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes</td></tr>
               <tr><td>Nextcloud apps</td><td><code>occ update:check</code> inside the container — apps version through the app store, not the image</td></tr>
             </table>
