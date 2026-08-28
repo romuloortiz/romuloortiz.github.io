@@ -180,10 +180,6 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 700; text-wrap: balance
   padding: 44px 0 80px;
   align-items: start;
 }
-@media (max-width: 900px) {
-  .body-grid { grid-template-columns: 1fr; gap: 8px; }
-  .rail { display: none; }
-}
 
 .rail {
   position: sticky;
@@ -206,6 +202,14 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 700; text-wrap: balance
 .rail a.active { color: var(--accent-ink); background: var(--accent-soft); }
 .rail .n { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); }
 .rail a.active .n { color: var(--accent); }
+
+/* Mobile override must come AFTER the base .rail rules above, not before --
+   equal specificity means the later rule in source order wins the cascade,
+   and a rule inside @media is no exception to that. */
+@media (max-width: 900px) {
+  .body-grid { grid-template-columns: 1fr; gap: 8px; }
+  .rail { display: none; }
+}
 
 .stages { display: flex; flex-direction: column; gap: 64px; max-width: 720px; }
 
