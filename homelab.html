@@ -184,7 +184,7 @@
           </div>
         </div>
         <p class="tight">Splitting each app's data and database into their own restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — adding Firefly meant extending the existing run rather than standing up a second parallel backup system.</p>
-        <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete, a ransomware scenario, or the whole enclosure failing at once. The one gap left is offsite: a second copy pushed to a remote machine over the same Tailscale network, for a proper 3‑2‑1, isn't built yet.</p>
+        <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete or a ransomware scenario, both of which this restic setup now actually covers via retained snapshots. A true offsite third copy — pushed to a remote machine over Tailscale, for a textbook 3‑2‑1 — was considered and deliberately shelved rather than left as an oversight: the remaining gap is a scenario like a house fire taking out the RAID and the backup drive together, and at that point the missing hard drive is not going to be the priority. Local RAID1 plus a dedicated backup drive is judged sufficient for the actual cost-vs-risk tradeoff here.</p>
       </section>
 
       <section class="stage" id="updates">
@@ -350,8 +350,8 @@
   <div class="closing">
     <h3>Next up</h3>
     <ul>
-      <li>Dropbox migration into Nextcloud</li>
-      <li>Offsite backup tier over Tailscale, for real 3‑2‑1 coverage</li>
+      <li>Dropbox migration into Nextcloud, planned for the weekend of 2026‑08‑29</li>
+      <li>Onboarding a fourth account — enthusiasm pending</li>
     </ul>
   </div>
 </div>
