@@ -38,6 +38,7 @@
       <a href="#monitoring"><span class="n">07</span> Alerting</a>
       <a href="#backup"><span class="n">08</span> Backups</a>
       <a href="#updates"><span class="n">09</span> Staying current</a>
+      <a href="#hardware"><span class="n">10</span> Physical maintenance</a>
     </nav>
 
     <main class="stages">
@@ -304,6 +305,42 @@
             </ol>
           </details>
 
+        </div>
+      </section>
+
+      <section class="stage" id="hardware">
+        <div class="stage-head"><span class="stage-num">10</span><h2>Physical maintenance: shutting the box down safely</h2></div>
+        <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — the box has to come down for real, which is a different problem: nine containers across three stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process, the same "one-shot, human-invoked, self-verifying" shape as the update skills:</p>
+        <div class="runbook">
+
+          <details>
+            <summary><span class="cmd">/pre-shutdown-sequence</span><span class="desc">before the power comes off</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Check for a live backup — the nightly restic run is a host cron job, not a container, so <code>docker ps</code> and <code>docker compose down</code> are both blind to it. Shutting down mid-backup is a real way to get a half-written repo.</li>
+              <li>Confirm both external mounts (RAID data volume, USB backup drive) are actually present before touching anything.</li>
+              <li><code>docker compose down</code> all three stacks — Nextcloud, Firefly III, monitoring — in that order.</li>
+              <li>Confirm nothing's left in <code>docker ps</code>, then hand off: the actual <code>sudo shutdown</code> has to be run by hand in its own terminal, since sudo has no controlling TTY through an automated session here (same quirk noted under Firefly III, above).</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/post-restart-sequence</span><span class="desc">after the power comes back</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Check both external mounts remounted <em>before</em> starting any container — starting Nextcloud against an empty mountpoint would look like a clean boot while quietly serving no data.</li>
+              <li><code>docker compose up -d</code> all three stacks — they were <code>down</code>ed, not just stopped, so nothing restarts on its own.</li>
+              <li>Health-check each service the same way the update runbooks do: <code>occ status</code>, the Firefly <code>/health</code> endpoint, container status for the rest.</li>
+              <li>After a RAM upgrade specifically, <code>free -h</code> to confirm the new total actually shows up.</li>
+            </ol>
+          </details>
+
+        </div>
+        <div class="callout">
+          <span class="tag">Why the mounts don't care about USB re-enumeration</span>
+          <p>Both the RAID enclosure and the backup drive are mounted by filesystem UUID in <code>/etc/fstab</code>, not by device letter — so it doesn't matter if the kernel hands the RAID enclosure <code>/dev/sdb</code> instead of <code>/dev/sda</code> after a reboot, which USB devices do fairly often depending on enumeration order at boot. Both also carry <code>nofail</code>, so a drive that didn't reconnect cleanly won't hang the boot — which cuts both ways: it also means a missing mount won't announce itself as an error, so the post-restart check has to look for it explicitly rather than trusting a clean boot.</p>
+        </div>
+        <div class="callout alert">
+          <span class="tag">Debugging story — pgrep catching its own tail</span>
+          <p>The pre-shutdown check for a live backup process first ran as <code>pgrep -fa restic</code>, which matched every single time — including with no backup running. <code>-f</code> matches the full command line, and the check's own invocation was a shell one-liner that contained the word "restic" in its own text, so the process was matching itself. Switched to <code>pgrep -x restic</code>, which matches only the exact process name, not the full command line an unrelated process happens to mention.</p>
         </div>
       </section>
 
