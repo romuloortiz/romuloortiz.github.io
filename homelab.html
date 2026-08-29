@@ -318,6 +318,7 @@
             <ol>
               <li>Check for a live backup — the nightly restic run is a host cron job, not a container, so <code>docker ps</code> and <code>docker compose down</code> are both blind to it. Shutting down mid-backup is a real way to get a half-written repo.</li>
               <li>Confirm both external mounts (RAID data volume, USB backup drive) are actually present before touching anything.</li>
+              <li>Pause the 7 Uptime Kuma monitors watching Nextcloud and Firefly — they'd otherwise sit in a "pending" state while those containers stop, with a real (if narrow) chance of escalating into a false alert (see callout below).</li>
               <li><code>docker compose down</code> all three stacks — Nextcloud, Firefly III, monitoring — in that order.</li>
               <li>Confirm nothing's left in <code>docker ps</code>, then hand off: the actual <code>sudo shutdown</code> has to be run by hand in its own terminal, since sudo has no controlling TTY through an automated session here (same quirk noted under Firefly III, above).</li>
             </ol>
@@ -329,6 +330,7 @@
               <li>Check both external mounts remounted <em>before</em> starting any container — starting Nextcloud against an empty mountpoint would look like a clean boot while quietly serving no data.</li>
               <li><code>docker compose up -d</code> all three stacks — they were <code>down</code>ed, not just stopped, so nothing restarts on its own.</li>
               <li>Health-check each service the same way the update runbooks do: <code>occ status</code>, the Firefly <code>/health</code> endpoint, container status for the rest.</li>
+              <li>Resume the same 7 Kuma monitors once Nextcloud and Firefly are confirmed healthy — they stay paused across the reboot otherwise, since Kuma's data survives on a bind mount.</li>
               <li>After a RAM upgrade specifically, <code>free -h</code> to confirm the new total actually shows up.</li>
             </ol>
           </details>
@@ -341,6 +343,10 @@
         <div class="callout alert">
           <span class="tag">Debugging story — pgrep catching its own tail</span>
           <p>The pre-shutdown check for a live backup process first ran as <code>pgrep -fa restic</code>, which matched every single time — including with no backup running. <code>-f</code> matches the full command line, and the check's own invocation was a shell one-liner that contained the word "restic" in its own text, so the process was matching itself. Switched to <code>pgrep -x restic</code>, which matches only the exact process name, not the full command line an unrelated process happens to mention.</p>
+        </div>
+        <div class="callout alert">
+          <span class="tag">Debugging story — the monitor that watched its own shutdown, then couldn't tell anyone</span>
+          <p>Expected Uptime Kuma to light up the phone during the first real shutdown; it didn't, just a few yellow squares. Turned out every monitor needs 5 consecutive failed checks a minute apart — about 5 minutes — before Kuma calls something actually down and fires a notification. The Nextcloud and Firefly containers each failed exactly once before Kuma's own container went down seconds later as part of the same monitoring stack shutdown, so nothing ever crossed the threshold. A monitor can't escalate an alert about an outage it's no longer running to witness. Beszel turned out to have real alert rules too (a correction to what this page used to say about it), with an even longer 10-minute grace period on host-down — but nothing it watches goes down before its own hub does, so it was never at risk the way Kuma was. Fix: both runbooks above now explicitly pause and resume just the 7 monitors that watch services stopped individually, ahead of the stack that watches them.</p>
         </div>
       </section>
 
