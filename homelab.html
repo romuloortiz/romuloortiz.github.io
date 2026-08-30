@@ -127,6 +127,10 @@
         <div class="stage-head"><span class="stage-num">06</span><h2>Nextcloud: the subscription killer</h2></div>
         <p>Nextcloud runs in Docker, with its file storage pointed straight at the RAID1 mount — so every photo and document rides on mirrored disks from day one, not as an afterthought. Three accounts are set up: both parents and a 14-year-old son. Two of the three have actually moved their data in so far; the third has an account waiting and no particular urgency to fill it — migrating "in the fullness of time" is a perfectly acceptable pace for a project nobody's charging late fees on, unlike certain other subscription services that shall remain named in the next sentence.</p>
         <p class="tight">Photo libraries have been migrated in from <strong>iCloud</strong>, <strong>Google Photos</strong>, and — as of the last one to fall — <strong>Dropbox</strong>, each one moved over by an extract/process/filter/upload pipeline Claude wrote and ran, not a manual drag-and-drop through three different web UIs. One self-hosted app has now fully replaced three separate subscriptions — <strong>Google One</strong> (the one plan covering both Google Photos and Google Drive — they're not two subscriptions, just two faces of the same one), <strong>iCloud</strong> storage, and <strong>Dropbox</strong> — for the cost of the electricity to run the box.</p>
+        <div class="callout">
+          <span class="tag">What this actually gets you</span>
+          <p>Nextcloud on its own is the file-storage layer — a self-hosted Dropbox: folders, sync, sharing, access from any device. What turns that into an actual iCloud/Google Photos replacement is two apps riding on top of it. <strong>Memories</strong> is the photo experience: a timeline you scroll by date, map view by location, and — because <strong>Recognize</strong> runs the ML side of it — automatic face grouping and object/scene tagging, the same conveniences the big-tech photo apps use to sell you on staying put. <strong>Groupware</strong> (calendar, contacts, mail) is the other half: point your phone's native calendar and contacts apps at it over the same open standards (CalDAV/CardDAV) any client already speaks, and Google Calendar or iCloud Calendar quietly stop being load-bearing. None of this needs a browser day-to-day — Nextcloud's own iOS app handles it, including camera-roll auto-upload, so photos land on your own server the moment they're taken, the same way iCloud Photos or Google Photos would do it automatically in the background.</p>
+        </div>
       </section>
 
       <section class="stage" id="firefly">
@@ -152,6 +156,10 @@
           <p>Firefly ships a dedicated <code>GET /health</code> route that runs a real database query (not just "is the process alive") and returns plain-text <code>OK</code>. Plain text, notably — not JSON like the other services' health checks, which matters for wiring it into Uptime Kuma: it needs an <strong>HTTP(s) - Keyword</strong> monitor (keyword <code>OK</code>), not a JSON Query monitor, or the check would fail to parse a response that was never JSON in the first place. Docker Container monitors cover all three containers the same way Nextcloud's two do.</p>
         </div>
         <p class="tight">First boot took several minutes longer than Nextcloud's did — not a hang, just Firefly running its entire historical migration-and-upgrade chain in sequence on what was, seconds earlier, an empty database. Steady progress in the logs, not silence, is what that looks like from the outside — worth checking before assuming a slow first boot means a broken one.</p>
+        <div class="callout">
+          <span class="tag">What this actually gets you</span>
+          <p>Firefly III is a real double-entry personal finance manager — the Quicken/YNAB category: every checking, savings, and credit card account in one place, budgets that actually reconcile against real transactions, and a genuine picture of net worth over time, not just a balance number per app. The bigger difference from a cloud finance app is what it doesn't ask for: no bank-login aggregator service sitting between your accounts and the dashboard, no third party whose business model depends on categorizing your spending. Firefly itself has no official mobile app, which sounds like a gap until you notice it's a fully open API instead — <strong>Abacus</strong>, a well-regarded third-party iOS client, is what actually sits on the phone here, and it's a properly native experience: add a transaction between calls, check a balance at checkout, without ever opening a browser. Self-hosted backend, best-of-breed client, no single company owning both ends.</p>
+        </div>
       </section>
 
       <section class="stage" id="monitoring">
@@ -176,6 +184,10 @@
         <div class="callout">
           <span class="tag">Cron-driven, on purpose split two ways</span>
           <p>An 8am job bundles six separate staleness checks — OS packages and a pending-reboot flag, plus four more added later (see <a href="#updates">Staying current</a>, below) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
+        </div>
+        <div class="callout">
+          <span class="tag">What this actually gets you</span>
+          <p>None of this lives behind a browser tab you have to remember to open. Beszel and Uptime Kuma both have real iOS apps, so hardware health and uptime status are a home-screen icon away, not a bookmarked URL; ntfy's app is what actually turns its push notifications into the kind that lock-screen the phone, not an email that sits unread. The end result is a genuinely native "is my stuff okay" experience running entirely on hardware in a closet, with none of it costing a subscription or handing status data to a third party to find out.</p>
         </div>
       </section>
 
