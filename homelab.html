@@ -16,7 +16,7 @@
   <header class="masthead">
     <p class="eyebrow">Home Lab — Build Log</p>
     <h1>Four subscriptions, replaced by one box on a shelf.</h1>
-    <p class="dek">How the home server came together: the hardware, the network, the storage, and the alarms that go off when something's wrong — written up for anyone curious enough to build their own.</p>
+    <p class="dek">How the home server came together: the hardware, the network, the storage, and the alarms that go off the instant something's wrong — written up for anyone curious enough to build their own, or nosy enough to want the receipts.</p>
     <div class="stats">
       <div class="stat"><div class="v">$0/mo</div><div class="l">recurring cost</div></div>
       <div class="stat"><div class="v">$234.65</div><div class="l">total cost, incl. 2020 hardware</div></div>
@@ -46,7 +46,7 @@
 
       <section class="stage" id="machine">
         <div class="stage-head"><span class="stage-num">01</span><h2>The machine</h2></div>
-        <p>Nothing exotic, and not a fresh purchase either — the core of this box is a mini PC that's been running since 2020, given a second job instead of a trip to e-waste. It runs 24/7 in a closet, which is really the whole trick: the value of a home lab is uptime, not horsepower, and this hardware still has plenty of the former left in it.</p>
+        <p>Nothing exotic, and not a fresh purchase either — the core of this box is a mini PC that's been running since 2020, given a second job instead of a trip to e-waste. It runs 24/7 in a closet, which is really the whole trick: the value of a home lab is uptime, not horsepower, and this six-year-old hardware still has plenty of the former left in it — bragging rights about teraflops can wait for a machine that isn't older than some of the subscriptions it just replaced.</p>
         <div class="callout">
           <span class="tag">Second life, not a purpose-bought server</span>
           <p>The mini PC and its SSD go back to 2020, bought as an everyday Windows 10 desktop — nothing to do with this project at the time. When its CPU generation turned out to fall just short of Windows 11's hardware requirements, it was headed for e-waste for a licensing reason, not a broken one: nothing about the machine had actually failed. Wiped, put on Ubuntu, and repointed at a job it's genuinely well-suited for — sitting in a closet running lightweight services 24/7 — it got years of useful life back instead of a landfill. Everything else in the build below (RAM, the RAID enclosure, the data drive) was bought new, specifically for this.</p>
@@ -82,8 +82,8 @@
 
       <section class="stage" id="os">
         <div class="stage-head"><span class="stage-num">02</span><h2>Ubuntu, and why it's boring on purpose</h2></div>
-        <p>Running <strong>Ubuntu 26.04.1 LTS</strong> ("Resolute Raccoon"). LTS specifically — a five-year support window means this box can sit unattended for years without an OS-level end-of-life forcing a rebuild, which matters a lot more on a machine nobody looks at daily than it does on a laptop.</p>
-        <p class="tight">The other reason is unglamorous but real: when something breaks at 11pm, Ubuntu has the largest pile of Stack Overflow answers of any Linux distro. For a one-person ops team, that's worth more than any technical edge a more "correct" distro might offer.</p>
+        <p>Running <strong>Ubuntu 26.04.1 LTS</strong> ("Resolute Raccoon" — someone in Mark Shuttleworth's naming committee is having a great time). LTS specifically — a five-year support window means this box can sit unattended for years without an OS-level end-of-life forcing a rebuild, which matters a lot more on a machine nobody looks at daily than it does on a laptop.</p>
+        <p class="tight">The other reason is unglamorous but real: when something breaks at 11pm, Ubuntu has the largest pile of Stack Overflow answers of any Linux distro. For a one-person ops team — most of whom is, by their own admission, not actually a sysadmin — that's worth more than any technical edge a more "correct" distro might offer. Arch users, look away now.</p>
       </section>
 
       <section class="stage" id="network">
@@ -91,7 +91,7 @@
         <p>The box joined a personal <strong>Tailscale</strong> network — a mesh VPN built on WireGuard. Every device that needs to reach the server (laptop, phone, tablet) gets its own private key and its own <code>100.x.x.x</code> address on the tailnet; the devices talk to each other directly over an encrypted tunnel, brokered by Tailscale's coordination servers but never routed through them.</p>
         <div class="callout">
           <span class="tag">Security consideration</span>
-          <p>Zero inbound ports are opened on the home router. There is nothing for a port scanner to find, because there is nothing listening on the public internet at all — every service (SSH, Nextcloud, the dashboards) is reachable only from devices already authenticated into the tailnet. That's a meaningfully smaller attack surface than the traditional homelab approach of forwarding ports through the router and locking things down with a firewall and fail2ban after the fact.</p>
+          <p>Zero inbound ports are opened on the home router. There is nothing for a port scanner to find, because there is nothing listening on the public internet at all — every service (SSH, Nextcloud, the dashboards) is reachable only from devices already authenticated into the tailnet. Somewhere out there a bot is dutifully knocking on every port of this IP address and getting nothing but silence for its trouble. That's a meaningfully smaller attack surface than the traditional homelab approach of forwarding ports through the router and locking things down with a firewall and fail2ban after the fact — this way there's simply no door to pick the lock on.</p>
         </div>
         <p class="tight">It also scales for free: Tailscale's Personal plan covers the account holder plus 5 more people (6 total) with no cap on devices per person. Right now the tailnet already has 3 logins and 8 devices on it — laptops, phones, a tablet — at zero cost, which still leaves headroom, but not infinite headroom: every new invite is a deliberate call against that ceiling, not a default yes.</p>
         <div class="mesh">
@@ -113,13 +113,13 @@
 
       <section class="stage" id="nextcloud">
         <div class="stage-head"><span class="stage-num">05</span><h2>Nextcloud: the subscription killer</h2></div>
-        <p>Nextcloud runs in Docker, with its file storage pointed straight at the RAID1 mount — so every photo and document rides on mirrored disks from day one, not as an afterthought. Three accounts are set up: both parents and a 14-year-old son. Two of the three have actually moved their data in so far; the third has an account waiting and no particular urgency to fill it — migrating "in the fullness of time" is a perfectly acceptable pace for a project nobody's charging late fees on.</p>
+        <p>Nextcloud runs in Docker, with its file storage pointed straight at the RAID1 mount — so every photo and document rides on mirrored disks from day one, not as an afterthought. Three accounts are set up: both parents and a 14-year-old son. Two of the three have actually moved their data in so far; the third has an account waiting and no particular urgency to fill it — migrating "in the fullness of time" is a perfectly acceptable pace for a project nobody's charging late fees on, unlike certain other subscription services that shall remain named in the next sentence.</p>
         <p class="tight">Photo libraries have been migrated in from <strong>iCloud</strong>, <strong>Google Photos</strong>, and — as of the last one to fall — <strong>Dropbox</strong>. One self-hosted app has now fully replaced three separate subscriptions — <strong>Google One</strong> (the one plan covering both Google Photos and Google Drive — they're not two subscriptions, just two faces of the same one), <strong>iCloud</strong> storage, and <strong>Dropbox</strong> — for the cost of the electricity to run the box.</p>
       </section>
 
       <section class="stage" id="firefly">
         <div class="stage-head"><span class="stage-num">06</span><h2>Firefly III: the Quicken killer</h2></div>
-        <p>The newest addition, and the reason the subscription count in the header didn't stop at three: <strong>Firefly III</strong>, a self-hosted, double-entry personal finance manager, replacing a Quicken subscription the same way Nextcloud replaced the cloud-storage stack — one self-hosted app, zero recurring cost.</p>
+        <p>The newest addition, and the reason the subscription count in the header didn't stop at three: <strong>Firefly III</strong>, a self-hosted, double-entry personal finance manager, replacing a Quicken subscription the same way Nextcloud replaced the cloud-storage stack — one self-hosted app, zero recurring cost, and one fewer company that gets to email me about a price increase.</p>
         <div class="spec">
           <div class="spec-title">Three containers, same shape as Nextcloud plus one extra</div>
           <div class="spec-scroll">
@@ -144,7 +144,7 @@
 
       <section class="stage" id="monitoring">
         <div class="stage-head"><span class="stage-num">07</span><h2>Alerting: three containers, three different questions</h2></div>
-        <p>A server nobody's watching is a server that fails silently. Three small containers each answer a different question, and all of them funnel into the same place:</p>
+        <p>A server nobody's watching is a server that fails silently, usually at the worst possible moment, usually right when you're bragging about it to someone. Three small containers each answer a different question, and all of them funnel into the same place:</p>
         <div class="spec">
           <div class="spec-title">Monitoring containers</div>
           <div class="spec-scroll">
@@ -185,12 +185,12 @@
           </div>
         </div>
         <p class="tight">Splitting each app's data and database into their own restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — adding Firefly meant extending the existing run rather than standing up a second parallel backup system.</p>
-        <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete or a ransomware scenario, both of which this restic setup now actually covers via retained snapshots. A true offsite third copy — pushed to a remote machine over Tailscale, for a textbook 3‑2‑1 — was considered and deliberately shelved rather than left as an oversight: the remaining gap is a scenario like a house fire taking out the RAID and the backup drive together, and at that point the missing hard drive is not going to be the priority. Local RAID1 plus a dedicated backup drive is judged sufficient for the actual cost-vs-risk tradeoff here.</p>
+        <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete or a ransomware scenario, both of which this restic setup now actually covers via retained snapshots. "I have RAID1" is not a backup strategy, it's a very expensive way to still lose everything with extra steps and a false sense of security. A true offsite third copy — pushed to a remote machine over Tailscale, for a textbook 3‑2‑1 — was considered and deliberately shelved rather than left as an oversight: the remaining gap is a scenario like a house fire taking out the RAID and the backup drive together, and at that point the missing hard drive is not going to be the priority. Local RAID1 plus a dedicated backup drive is judged sufficient for the actual cost-vs-risk tradeoff here.</p>
       </section>
 
       <section class="stage" id="updates">
         <div class="stage-head"><span class="stage-num">09</span><h2>Staying current: six update systems, one push</h2></div>
-        <p>A server that's up doesn't mean a server that's current. OS packages, two hand-installed CLI tools, eight Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
+        <p>A server that's up doesn't mean a server that's current — it just means it's up, quietly getting older and more vulnerable while looking perfectly fine from the outside. OS packages, two hand-installed CLI tools, eight Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks — so the 8am job was widened until none of them could go stale unnoticed.</p>
         <div class="spec">
           <div class="spec-title">What the 8am job checks</div>
           <div class="spec-scroll">
@@ -311,7 +311,7 @@
 
       <section class="stage" id="hardware">
         <div class="stage-head"><span class="stage-num">10</span><h2>Physical maintenance: shutting the box down safely</h2></div>
-        <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — the box has to come down for real, which is a different problem: nine containers across three stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process, the same "one-shot, human-invoked, self-verifying" shape as the update skills:</p>
+        <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — at some point you have to actually crack the case open, which means the box has to come down for real, and "unplug it and hope" is not a runbook. That's a different problem: nine containers across three stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process, the same "one-shot, human-invoked, self-verifying" shape as the update skills:</p>
         <div class="runbook">
 
           <details>
@@ -371,7 +371,7 @@
   <div class="closing">
     <h3>Next up</h3>
     <ul>
-      <li>Migrating the third account's data over — no rush, no deadline</li>
+      <li>Migrating the third account's data over — no rush, no deadline, and definitely no late fees, since nobody's charging any</li>
     </ul>
   </div>
 </div>
