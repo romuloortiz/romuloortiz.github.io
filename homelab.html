@@ -34,7 +34,7 @@
       <a href="#machine"><span class="n">02</span> The machine</a>
       <a href="#os"><span class="n">03</span> Ubuntu</a>
       <a href="#network"><span class="n">04</span> Tailscale</a>
-      <a href="#ssh"><span class="n">05</span> Remote access</a>
+      <a href="#ssh"><span class="n">05</span> SSH & installing Claude</a>
       <a href="#nextcloud"><span class="n">06</span> Nextcloud</a>
       <a href="#firefly"><span class="n">07</span> Firefly III</a>
       <a href="#monitoring"><span class="n">08</span> Alerting</a>
@@ -119,8 +119,17 @@
       </section>
 
       <section class="stage" id="ssh">
-        <div class="stage-head"><span class="stage-num">05</span><h2>Remote access via SSH</h2></div>
+        <div class="stage-head"><span class="stage-num">05</span><h2>Remote access via SSH, then installing the actual administrator</h2></div>
         <p>With the tailnet in place, <code>openssh-server</code> went on next — this is what actually lets the box get administered from anywhere, instead of requiring a keyboard plugged into it. The daemon itself binds normally; what makes it safe is that nothing upstream ever forwards a connection to it from the open internet, so in practice it's reachable only over the tailnet's private address space, from devices that are already trusted. Confirming that the default config didn't need anything hardened beyond what the tailnet already provides took a few minutes of back-and-forth with Claude, not an afternoon of second-guessing a hardening guide.</p>
+        <p class="tight">The very next thing installed, over that same SSH session, was <strong>Claude Code</strong> — the tool that ends up doing basically everything described on this page from this point forward. This is the moment "remote access" stopped meaning "a terminal I can reach from anywhere" and started meaning "an admin I can reach from anywhere."</p>
+        <div class="callout">
+          <span class="tag">Gemini CLI, installed alongside as a designated understudy</span>
+          <p><strong>Gemini CLI</strong> went on at the same time, not because the setup needed two assistants, but as a deliberate plan for after the setup was done: once the initial build settled, day-to-day maintenance (nightly-check triage, routine updates, the occasional "why did this alert fire") is light enough work to hand to a free tier, keeping Claude for anything that actually needs it.</p>
+        </div>
+        <div class="callout">
+          <span class="tag">Why the free tier is actually enough for this, model by model</span>
+          <p>The catch is that "Gemini's free tier" isn't one thing — it's split sharply by model, and that split is what makes this work at all. <strong>Gemini Flash-Lite</strong>'s free tier runs in the neighborhood of <strong>15 requests per minute and roughly 1,000 requests per day</strong>, with a generous shared token-per-minute ceiling behind it. The plain <strong>Flash</strong> model, by contrast, has had its free daily allowance cut hard over time — user reports on Google's own developer forum describe it dropping as low as ~20 requests a day in recent rate-limit changes, which is nowhere near enough for anything beyond kicking the tires. That's the entire reason this only works in <strong>Flash-Lite mode</strong> specifically, not "Gemini" generically — the full model's free tier isn't built for sustained use, and Google doesn't publish these numbers as a fixed table anyway (its own docs point you at AI Studio's live dashboard for your actual current limits, because they get adjusted). For a homelab specifically, the math holds up well even on the conservative end: routine admin work here is bursty and occasional — a nightly notification triaged, an update runbook run every so often, an alert investigated — not a continuous stream of requests, so ~1,000/day of headroom on Flash-Lite comfortably covers real usage with plenty to spare, right up until something big enough happens that it's worth switching back to Claude for the afternoon.</p>
+        </div>
       </section>
 
       <section class="stage" id="nextcloud">
