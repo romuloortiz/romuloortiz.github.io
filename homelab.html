@@ -16,7 +16,7 @@
   <header class="masthead">
     <p class="eyebrow">Home Lab — Built by Directing Claude</p>
     <h1>Four subscriptions, replaced by one box on a shelf.</h1>
-    <p class="dek">I'm not a systems administrator. Claude is the reason this exists anyway — every container, every monitor, every 3am backup script, directed by describing what I wanted rather than by already knowing how. This is the write-up of what that actually looked like: the hardware, the network, the storage, and the alarms that go off the instant something's wrong.</p>
+    <p class="dek">I don't have a systems administrator's background. Claude does the parts that require one — every container, every monitor, every 3am backup script, built by describing what I wanted and deciding what was right, rather than by already knowing every command myself. This is the write-up of what that actually looked like: the hardware, the network, the storage, and the alarms that go off the instant something's wrong.</p>
     <div class="stats">
       <div class="stat"><div class="v">$0/mo</div><div class="l">recurring cost</div></div>
       <div class="stat"><div class="v">$234.65</div><div class="l">total cost, incl. 2020 hardware</div></div>
@@ -48,8 +48,8 @@
 
       <section class="stage" id="claude-intro">
         <div class="stage-head"><span class="stage-num">01</span><h2>Read this part first: none of this was me alone</h2></div>
-        <p>Quick disclosure up front, because burying it in a closing section would undersell the actual point of this page: I'm not a systems administrator, and not that long ago I couldn't have told you what a reverse proxy was for. Every stage that follows — the hardware call, the Docker Compose files, the security posture, the 3am cron job, the debugging stories you're about to read — happened because I described what I wanted to <strong>Claude</strong>, and it did the parts I didn't know how to do, explained the parts I needed to actually understand, and remembered the parts I would've had to relearn the hard way a second time.</p>
-        <p class="tight">This isn't a "Claude helped a little" story. Claude is the operating system this whole project actually runs on top of — Ubuntu just boots the box. What follows is a real build log, with real hardware, real costs, real bugs, and real fixes; the difference from a normal one is that every decision point below was a conversation, not a manual I already had memorized.</p>
+        <p>Quick disclosure up front, because burying it in a closing section would undersell the actual point of this page: I don't have a systems administrator's background. Every stage that follows — the hardware call, the Docker Compose files, the security posture, the 3am cron job, the debugging stories you're about to read — happened because I directed <strong>Claude</strong>: set the goal, made the calls on tradeoffs, and reviewed the result, while Claude handled the parts that needed hands-on Linux depth, explained its reasoning when I asked, and remembered what it learned so the next problem didn't start from zero.</p>
+        <p class="tight">This isn't a "Claude helped a little" story. Claude is the operating system this whole project actually runs on top of — Ubuntu just boots the box. And it happened fast: this entire build, top to bottom, came together in a couple of weeks, not months — which is itself kind of the point. What follows is a real build log, with real hardware, real costs, real bugs, and real fixes; the difference from a normal one is that every decision point below was a conversation, not a manual I already had memorized.</p>
         <div class="callout">
           <span class="tag">What "directing Claude" actually looked like</span>
           <p>Not prompt-once-and-pray. A running collaboration: describe the goal ("I want backups I can actually trust," "I want to know if a container dies at 2am"), let Claude propose an approach and explain the tradeoff when something sounded off, then let it write and run the actual commands — Docker Compose files, cron jobs, <code>occ</code> invocations, all of it. When things broke (and they broke — see the callouts throughout this page), Claude diagnosed it, fixed it, and turned the fix into something reusable instead of a one-time patch. That last part is the piece that compounds, and it's the part a search engine never does for you.</p>
@@ -61,7 +61,7 @@
         <p>Nothing exotic, and not a fresh purchase either — the core of this box is a mini PC that's been running since 2020, given a second job instead of a trip to e-waste. Claude was the one who talked me out of buying anything new for the compute layer at all, once it walked through the actual case for reusing a 2020 desktop over a Raspberry Pi or a fresh NUC: the value of a home lab is uptime, not horsepower, and this six-year-old hardware still has plenty of the former left in it — bragging rights about teraflops can wait for a machine that isn't older than some of the subscriptions it just replaced.</p>
         <div class="callout">
           <span class="tag">Second life, not a purpose-bought server</span>
-          <p>The mini PC and its SSD go back to 2020, bought as an everyday Windows 10 desktop — nothing to do with this project at the time. When its CPU generation turned out to fall just short of Windows 11's hardware requirements, it was headed for e-waste for a licensing reason, not a broken one: nothing about the machine had actually failed. Wiped, put on Ubuntu, and repointed at a job it's genuinely well-suited for — sitting in a closet running lightweight services 24/7 — it got years of useful life back instead of a landfill, with Claude walking through the actual install and LUKS disk-encryption setup step by step, since "reinstall the OS on a decade-old mini PC without breaking disk encryption" wasn't a skill I walked in with. Everything else in the build below (RAM, the RAID enclosure, the data drive) was bought new, specifically for this.</p>
+          <p>The mini PC and its SSD go back to 2020, bought as an everyday Windows 10 desktop — nothing to do with this project at the time. When its CPU generation turned out to fall just short of Windows 11's hardware requirements, it was headed for e-waste for a licensing reason, not a broken one: nothing about the machine had actually failed. Wiped, put on Ubuntu, and repointed at a job it's genuinely well-suited for — sitting in a closet running lightweight services 24/7 — it got years of useful life back instead of a landfill, with Claude walking through the actual install and LUKS disk-encryption setup step by step — exactly the kind of one-shot, don't-get-it-wrong task where having someone who's done it a thousand times beats winging it from a wiki page. Everything else in the build below (RAM, the RAID enclosure, the data drive) was bought new, specifically for this.</p>
         </div>
         <div class="spec">
           <div class="spec-title">Hardware</div>
@@ -95,7 +95,7 @@
       <section class="stage" id="os">
         <div class="stage-head"><span class="stage-num">03</span><h2>Ubuntu, and why it's boring on purpose</h2></div>
         <p>Running <strong>Ubuntu 26.04.1 LTS</strong> ("Resolute Raccoon") — Claude's actual recommendation the moment it was asked "which distro for a box I'm not going to touch for years," and the reasoning held up: a five-year support window means this box can sit unattended for years without an OS-level end-of-life forcing a rebuild, which matters a lot more on a machine nobody looks at daily than it does on a laptop.</p>
-        <p class="tight">The other reason is unglamorous but real: when something breaks at 11pm, Ubuntu has the largest pile of Stack Overflow answers of any Linux distro. In practice, though, "ask Claude" beat "search Stack Overflow" every single time it actually came up — the pile of answers matters a lot less when the thing reading them for you already has, and can tell you which of them are outdated. For a one-person ops team — most of whom is, by their own admission, not actually a sysadmin — that's worth more than any technical edge a more "correct" distro might offer. Arch users, look away now.</p>
+        <p class="tight">The other reason is unglamorous but real: when something breaks at 11pm, Ubuntu has the largest pile of Stack Overflow answers of any Linux distro. In practice, though, "ask Claude" beat "search Stack Overflow" every single time it actually came up — the pile of answers matters a lot less when the thing reading them for you already has, and can tell you which of them are outdated. For a one-person ops team, that's worth more than any technical edge a more "correct" distro might offer. Arch users, look away now.</p>
       </section>
 
       <section class="stage" id="network">
@@ -151,7 +151,7 @@
           <span class="tag">A health check that actually checks something</span>
           <p>Firefly ships a dedicated <code>GET /health</code> route that runs a real database query (not just "is the process alive") and returns plain-text <code>OK</code>. Plain text, notably — not JSON like the other services' health checks, which matters for wiring it into Uptime Kuma: it needs an <strong>HTTP(s) - Keyword</strong> monitor (keyword <code>OK</code>), not a JSON Query monitor, or the check would fail to parse a response that was never JSON in the first place. Docker Container monitors cover all three containers the same way Nextcloud's two do.</p>
         </div>
-        <p class="tight">First boot took several minutes longer than Nextcloud's did — not a hang, just Firefly running its entire historical migration-and-upgrade chain in sequence on what was, seconds earlier, an empty database. Steady progress in the logs, not silence, is what that looks like from the outside — and knowing to check the logs instead of just assuming it hung was, again, not an instinct I walked in with.</p>
+        <p class="tight">First boot took several minutes longer than Nextcloud's did — not a hang, just Firefly running its entire historical migration-and-upgrade chain in sequence on what was, seconds earlier, an empty database. Steady progress in the logs, not silence, is what that looks like from the outside — worth checking before assuming a slow first boot means a broken one.</p>
       </section>
 
       <section class="stage" id="monitoring">
@@ -181,22 +181,30 @@
 
       <section class="stage" id="backup">
         <div class="stage-head"><span class="stage-num">09</span><h2>Backup strategy</h2></div>
-        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — backs up Nextcloud's files and database, then (added once <a href="#firefly">Firefly III</a> joined the box) Firefly's uploaded attachments and its own database, each kept separate on purpose, to the dedicated 250GB drive using <strong>restic</strong>:</p>
+        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the two apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 250GB drive using <strong>restic</strong>:</p>
         <div class="spec">
           <div class="spec-title">Nightly backup sequence</div>
           <div class="spec-scroll">
             <table>
-              <tr><td>1</td><td><code>mysqldump</code> both apps' databases to fixed filenames</td></tr>
+              <tr><td>1</td><td><code>mysqldump</code> the Nextcloud database to a fixed filename</td></tr>
               <tr><td>2</td><td><code>restic backup</code> the Nextcloud data on the RAID (tagged separately)</td></tr>
               <tr><td>3</td><td><code>restic backup</code> the Nextcloud database dump (tagged separately)</td></tr>
-              <tr><td>4</td><td><code>restic backup</code> Firefly's uploaded attachments on the RAID (tagged separately)</td></tr>
-              <tr><td>5</td><td><code>restic backup</code> the Firefly database dump (tagged separately)</td></tr>
-              <tr><td>6</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly, across all four categories</td></tr>
-              <tr><td>7</td><td>One ntfy notification with all four sizes, success or fail</td></tr>
+              <tr><td>4</td><td><code>mysqldump</code> the Firefly III database to a fixed filename</td></tr>
+              <tr><td>5</td><td><code>restic backup</code> Firefly's uploaded attachments on the RAID (tagged separately)</td></tr>
+              <tr><td>6</td><td><code>restic backup</code> the Firefly database dump (tagged separately)</td></tr>
+              <tr><td>7</td><td><code>restic backup</code> ntfy's subscription/topic state (tagged separately)</td></tr>
+              <tr><td>8</td><td><code>restic backup</code> Beszel's dashboard config and history (tagged separately, excluding the agent's own SSH private key — see below)</td></tr>
+              <tr><td>9</td><td><code>restic backup</code> Uptime Kuma's monitor config and history (tagged separately)</td></tr>
+              <tr><td>10</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly, across all seven categories</td></tr>
+              <tr><td>11</td><td>One ntfy notification with all seven sizes, success or fail</td></tr>
             </table>
           </div>
         </div>
-        <p class="tight">Splitting each app's data and database into their own restic calls means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — adding Firefly meant extending the existing run rather than standing up a second parallel backup system, and "just extend the existing thing" was Claude's call, not an obvious one to someone who'd never built the first version.</p>
+        <p class="tight">Splitting each source into its own restic call means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — every new service (Firefly, then later the monitoring stack) meant extending the existing run rather than standing up a parallel backup system for it, which is exactly the instinct that keeps "one script that covers everything" from quietly turning into "five scripts, three of which nobody remembers to check."</p>
+        <div class="callout">
+          <span class="tag">One deliberate exclusion, not an oversight</span>
+          <p>Beszel's data directory holds one file the backup user can't read: the beszel-agent's own SSH private key, root-owned at mode 600. Backing it up wasn't worth loosening its permissions for — losing it just means the agent container re-provisions a new one on next start, not real data loss — so it's explicitly excluded rather than silently failing the whole backup over one unreadable file restic would otherwise choke on.</p>
+        </div>
         <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete or a ransomware scenario, both of which this restic setup now actually covers via retained snapshots. "I have RAID1" is not a backup strategy, it's a very expensive way to still lose everything with extra steps and a false sense of security — a distinction Claude drew early and that reshaped the whole approach. A true offsite third copy — pushed to a remote machine over Tailscale, for a textbook 3‑2‑1 — was considered and deliberately shelved rather than left as an oversight: the remaining gap is a scenario like a house fire taking out the RAID and the backup drive together, and at that point the missing hard drive is not going to be the priority. Local RAID1 plus a dedicated backup drive is judged sufficient for the actual cost-vs-risk tradeoff here.</p>
       </section>
 
@@ -365,7 +373,7 @@
 
       <section class="stage" id="claude-payoff">
         <div class="stage-head"><span class="stage-num">12</span><h2>Why this is an AI story, not a sysadmin story</h2></div>
-        <p>If you're reading this because your own team is being asked to show a real win from working with AI, here's mine, stated plainly: a systems administrator's job — the part that used to require years of hands-on Linux experience to even attempt safely — got done, to production standards, by someone who didn't have that experience, because Claude filled the gap instead of gatekeeping behind it. Not a toy demo, not a script it generated once and left me to debug alone. An actual home lab, actually running, actually monitored, actually backed up, for actual money spent (see: $234.65, receipts included above).</p>
+        <p>If you're reading this because your own team is being asked to show a real win from working with AI, here's mine, stated plainly: a systems administrator's job — the part that used to require years of hands-on Linux experience to even attempt safely — got done, to production standards, in a couple of weeks, because I set the direction and Claude filled the technical gap instead of gatekeeping behind it. Not a toy demo, not a script it generated once and left me to debug alone. An actual home lab, actually running, actually monitored, actually backed up, for actual money spent (see: $234.65, receipts included above).</p>
         <div class="callout">
           <span class="tag">Repeated processes become skills, not scripts</span>
           <p>Every <code>/update-*</code> command and both shutdown runbooks above started life as a one-off conversation — "how do I update ntfy without breaking push notifications" — solved once, then promoted into a named, repeatable, self-verifying procedure instead of getting re-derived from scratch (or re-Googled, cap in hand) the next time it came up. That's the actual difference between a script, which someone has to remember exists and where it's buried, and a skill, which just gets invoked by name the moment it's needed and quietly checks its own work afterward.</p>
@@ -374,7 +382,7 @@
           <span class="tag">Lessons become memories, not regrets</span>
           <p><code>pgrep</code> matching its own command line. Uptime Kuma alerting on an outage it stopped watching mid-collapse. A registry endpoint confidently lying about a container's real digest. The HEIC rabbit hole. Every one of those got learned exactly once — none of them needed re-learning the hard way a second time, because the lesson stuck around the way a colleague's institutional memory does, not the way a terminal scrollback that gets cleared on reboot does.</p>
         </div>
-        <p class="tight">None of this makes the hardware any less real, or the $234.65 line item any less honest — but crediting the box alone would be like crediting the car for the road trip. What actually turned a dead 2020 desktop and a drawer full of spare parts into a monitored, backed-up, self-updating home lab wasn't someone who already knew how to do all this. It was someone who didn't, paired with an AI that did the parts they couldn't, remembered the parts they'd forget by next Tuesday, and turned "I had to figure this out once" into "this just handles itself now." That's the actual shape of what changes when the assistant can hold context, write real infrastructure, debug real failures, and remember what it learned the next time you ask. Fair's fair; the credits roll for a reason.</p>
+        <p class="tight">None of this makes the hardware any less real, or the $234.65 line item any less honest — but crediting the box alone would be like crediting the car for the road trip. Turning a dead 2020 desktop and a drawer full of spare parts into a monitored, backed-up, self-updating home lab took someone directing the project and an AI capable of actually executing on the direction — asking good questions, making the tradeoff calls, and reviewing the result, while Claude handled the Linux depth, remembered what it learned, and turned "I had to figure this out once" into "this just handles itself now." That's the actual shape of what changes when the assistant can hold context, write real infrastructure, debug real failures, and remember what it learned the next time you ask. Fair's fair; the credits roll for a reason.</p>
       </section>
 
     </main>
@@ -384,6 +392,7 @@
     <h3>Next up</h3>
     <ul>
       <li>Migrating the third account's data over — no rush, no deadline, and definitely no late fees, since nobody's charging any</li>
+      <li>Confident enough now, after this build, to start trying day-to-day management through <strong>Gemini CLI</strong> instead — not a vote against Claude, more a "graduated from the tutorial" experiment to see how the same workflow holds up on a different assistant</li>
     </ul>
   </div>
 </div>
