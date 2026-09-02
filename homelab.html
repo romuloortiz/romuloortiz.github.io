@@ -19,9 +19,9 @@
     <p class="dek">I don't have a systems administrator's background. Claude does the parts that require one — every container, every monitor, every 3am backup script, built by describing what I wanted and deciding what was right, rather than by already knowing every command myself. This is the write-up of what that actually looked like: the hardware, the network, the storage, and the alarms that go off the instant something's wrong.</p>
     <div class="stats">
       <div class="stat"><div class="v">$0/mo</div><div class="l">recurring cost</div></div>
-      <div class="stat"><div class="v">$234.65</div><div class="l">total cost, incl. 2020 hardware</div></div>
+      <div class="stat"><div class="v">$257.97</div><div class="l">total cost, incl. 2020 hardware</div></div>
       <div class="stat"><div class="v">2C·4T</div><div class="l">CPU, 16GB RAM</div></div>
-      <div class="stat"><div class="v">1TB + 250GB</div><div class="l">RAID1 + backup disk</div></div>
+      <div class="stat"><div class="v">1TB + 1TB</div><div class="l">RAID1 + backup disk</div></div>
       <div class="stat"><div class="v">3 people</div><div class="l">onboarded to Nextcloud</div></div>
       <div class="stat"><div class="v">4 subscriptions</div><div class="l">retired: Google One, iCloud, Dropbox, Quicken</div></div>
       <div class="stat"><div class="v">Claude</div><div class="l">actual sysadmin on this project</div></div>
@@ -71,7 +71,7 @@
               <tr><td>Memory</td><td>16GB (upgraded from 7GB, 2026‑08‑28)</td></tr>
               <tr><td>OS disk</td><td>223GB SSD — LUKS‑encrypted (dm‑crypt + LVM)</td></tr>
               <tr><td>Data disk</td><td>1TB hardware RAID1 enclosure, 2 disks mirrored → ~916GB usable, ext4</td></tr>
-              <tr><td>Backup disk</td><td>250GB external USB HDD — pulled from a drawer, dedicated to backups only</td></tr>
+              <tr><td>Backup disk</td><td>1TB external USB HDD — iOmega RPHD‑U, dedicated to backups only</td></tr>
             </table>
           </div>
         </div>
@@ -85,11 +85,12 @@
               <tr><td>RAM upgrade</td><td>Timetec 8GB DDR3L SODIMM (→ 16GB total)</td><td>$22.25</td></tr>
               <tr><td>RAID enclosure</td><td>CENMATE 2‑bay USB 3.0 enclosure</td><td>$34.97</td></tr>
               <tr><td>Data drives</td><td>2× HP 1TB 7200RPM SATA HDD — the RAID1 mirror pair</td><td>$46.64</td></tr>
-              <tr class="total"><td>Total</td><td></td><td>$234.65</td></tr>
+              <tr><td>Backup drive</td><td>iOmega RPHD‑U 1TB external USB HDD</td><td>$23.32</td></tr>
+              <tr class="total"><td>Total</td><td></td><td>$257.97</td></tr>
             </table>
           </div>
         </div>
-        <p class="tight">The "2020" rows are what those two parts actually cost back then, carried forward for a true total rather than pretending this was a from-scratch build — the mini PC and its SSD were already doing a different job (see above). RAM, the RAID enclosure, and both mirror-pair data drives were the real new spend, bought specifically to turn a retired desktop into a server. The 250GB backup drive and the router it sits behind weren't bought at all, and neither were the monitor, keyboard, and mouse now bossing the box around — all four items scavenged from a previous desktop that went kaput years ago (the same one the mini PC had originally been drafted in to replace), rescued from a closet instead of a landfill. The drive alone had been sitting there collecting dust for years, which is most of how <a href="#backup">a real 3‑2‑1 backup setup</a> ended up costing nothing extra on top of the numbers above. Tax included where the receipt broke it out; call it a rounding error either way.</p>
+        <p class="tight">The "2020" rows are what those two parts actually cost back then, carried forward for a true total rather than pretending this was a from-scratch build — the mini PC and its SSD were already doing a different job (see above). RAM, the RAID enclosure, both mirror-pair data drives, and the backup drive were the real new spend, bought specifically to turn a retired desktop into a server. The router it sits behind wasn't bought at all, and neither were the monitor, keyboard, and mouse now bossing the box around — all three items scavenged from a previous desktop that went kaput years ago (the same one the mini PC had originally been drafted in to replace), rescued from a closet instead of a landfill. The backup drive itself started out the same way — a spare 250GB USB HDD pulled from that same drawer — and did the job for a while, right up until the actual data on the RAID volume outgrew what a free drive from a drawer was ever going to comfortably hold. $23.32 for a proper 1TB replacement is a small price for <a href="#backup">a real 3‑2‑1 backup setup</a> that isn't quietly living closer to full than the thing it's supposed to be protecting. Tax included where the receipt broke it out; call it a rounding error either way.</p>
       </section>
 
       <section class="stage" id="os">
@@ -202,7 +203,7 @@
 
       <section class="stage" id="backup">
         <div class="stage-head"><span class="stage-num">09</span><h2>Backup strategy</h2></div>
-        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the two apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 250GB drive using <strong>restic</strong>:</p>
+        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the two apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 1TB drive using <strong>restic</strong>:</p>
         <div class="spec">
           <div class="spec-title">Nightly backup sequence</div>
           <div class="spec-scroll">
@@ -394,7 +395,7 @@
 
       <section class="stage" id="claude-payoff">
         <div class="stage-head"><span class="stage-num">12</span><h2>Why this is an AI story, not a sysadmin story</h2></div>
-        <p>If you're reading this because your own team is being asked to show a real win from working with AI, here's mine, stated plainly: a systems administrator's job — the part that used to require years of hands-on Linux experience to even attempt safely — got done, to production standards, in a couple of weeks, because I set the direction and Claude filled the technical gap instead of gatekeeping behind it. Not a toy demo, not a script it generated once and left me to debug alone. An actual home lab, actually running, actually monitored, actually backed up, for actual money spent (see: $234.65, receipts included above).</p>
+        <p>If you're reading this because your own team is being asked to show a real win from working with AI, here's mine, stated plainly: a systems administrator's job — the part that used to require years of hands-on Linux experience to even attempt safely — got done, to production standards, in a couple of weeks, because I set the direction and Claude filled the technical gap instead of gatekeeping behind it. Not a toy demo, not a script it generated once and left me to debug alone. An actual home lab, actually running, actually monitored, actually backed up, for actual money spent (see: $257.97, receipts included above).</p>
         <div class="callout">
           <span class="tag">Repeated processes become skills, not scripts</span>
           <p>Every <code>/update-*</code> command and both shutdown runbooks above started life as a one-off conversation — "how do I update ntfy without breaking push notifications" — solved once, then promoted into a named, repeatable, self-verifying procedure instead of getting re-derived from scratch (or re-Googled, cap in hand) the next time it came up. That's the actual difference between a script, which someone has to remember exists and where it's buried, and a skill, which just gets invoked by name the moment it's needed and quietly checks its own work afterward.</p>
@@ -403,7 +404,7 @@
           <span class="tag">Lessons become memories, not regrets</span>
           <p><code>pgrep</code> matching its own command line. Uptime Kuma alerting on an outage it stopped watching mid-collapse. A registry endpoint confidently lying about a container's real digest. The HEIC rabbit hole. Every one of those got learned exactly once — none of them needed re-learning the hard way a second time, because the lesson stuck around the way a colleague's institutional memory does, not the way a terminal scrollback that gets cleared on reboot does.</p>
         </div>
-        <p class="tight">None of this makes the hardware any less real, or the $234.65 line item any less honest — but crediting the box alone would be like crediting the car for the road trip. Turning a dead 2020 desktop and a drawer full of spare parts into a monitored, backed-up, self-updating home lab took someone directing the project and an AI capable of actually executing on the direction — asking good questions, making the tradeoff calls, and reviewing the result, while Claude handled the Linux depth, remembered what it learned, and turned "I had to figure this out once" into "this just handles itself now." That's the actual shape of what changes when the assistant can hold context, write real infrastructure, debug real failures, and remember what it learned the next time you ask. Fair's fair; the credits roll for a reason.</p>
+        <p class="tight">None of this makes the hardware any less real, or the $257.97 line item any less honest — but crediting the box alone would be like crediting the car for the road trip. Turning a dead 2020 desktop and a drawer full of spare parts into a monitored, backed-up, self-updating home lab took someone directing the project and an AI capable of actually executing on the direction — asking good questions, making the tradeoff calls, and reviewing the result, while Claude handled the Linux depth, remembered what it learned, and turned "I had to figure this out once" into "this just handles itself now." That's the actual shape of what changes when the assistant can hold context, write real infrastructure, debug real failures, and remember what it learned the next time you ask. Fair's fair; the credits roll for a reason.</p>
       </section>
 
     </main>
