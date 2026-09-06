@@ -395,6 +395,67 @@
             </ol>
           </details>
 
+          <details>
+            <summary><span class="cmd">/update-firefly-cron</span><span class="desc">Firefly's cron sidecar</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>This one runs plain <code>alpine</code>, not a versioned app image — its only job is a daily <code>crond</code> ping to Firefly's own cron endpoint, no database, nothing to back up.</li>
+              <li><code>docker compose pull cron</code>, then <code>docker compose up -d cron</code> to recreate.</li>
+              <li>Confirm the crontab re-installed cleanly: logs show <code>crond</code> starting, not an error from the setup step.</li>
+              <li>Report the before/after digest of the <code>alpine</code> image.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-outline</span><span class="desc">wiki app container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — a new release can carry a DB migration.</li>
+              <li><code>docker compose pull outline</code>, then <code>docker compose up -d outline</code> to recreate (postgres/redis are separate services, untouched).</li>
+              <li>Confirm health (<code>200</code> on the public URL) and that OIDC login still redirects to Authentik correctly — the real regression risk on this one is losing the provider config across a recreate, not the container failing to start.</li>
+              <li>Report the before/after image digest.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-outline-db</span><span class="desc">Outline's Postgres container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — this holds every wiki document.</li>
+              <li><code>docker compose pull postgres</code>, then <code>docker compose up -d postgres</code> to recreate.</li>
+              <li>Confirm Outline reconnects cleanly (<code>200</code> on the public URL); reconnect the app container by hand if it logs connection errors.</li>
+              <li>Report the before/after digest, and confirm the pre-update backup completed.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-outline-redis</span><span class="desc">Outline's Redis container</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>No volume, no persistent state — purely the live-collaboration pub/sub and job queue layer, so no backup step needed.</li>
+              <li><code>docker compose pull redis</code>, then <code>docker compose up -d redis</code> to recreate.</li>
+              <li>Confirm the real <code>redis-cli ping</code> healthcheck reports healthy, and that Outline itself still responds (<code>200</code>) rather than logging a dropped connection.</li>
+              <li>Report the before/after image digest.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-authentik</span><span class="desc">server + worker, together</span><span class="badges"><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>The odd one out on this box: no floating <code>:latest</code> tag here — Authentik pins an explicit version, so "updating" means checking GitHub's latest release and bumping that value, not just re-pulling.</li>
+              <li>Read the release notes between current and target for breaking-change callouts before proceeding.</li>
+              <li>Pull and recreate server + worker together — same image, must stay version-matched, same reasoning as Beszel's hub+agent.</li>
+              <li>Confirm Authentik's own health check passes, <em>and</em> that Outline's OIDC login still redirects through to a real login page — the actual regression risk of this update is the login chain breaking, not Authentik itself failing to boot.</li>
+              <li>Report the version bumped from/to.</li>
+            </ol>
+          </details>
+
+          <details>
+            <summary><span class="cmd">/update-authentik-db</span><span class="desc">Authentik's Postgres container</span><span class="badges"><span class="badge warn">backs up first</span><span class="chev">▸</span></span></summary>
+            <ol>
+              <li>Back up first — this holds every login and provider config for the identity provider fronting Outline (and anything else added later).</li>
+              <li><code>docker compose pull postgresql</code>, then <code>docker compose up -d postgresql</code> to recreate.</li>
+              <li>Confirm Authentik reconnects cleanly, and that login still works end to end, not just the health check.</li>
+              <li>Report the before/after digest, and confirm the pre-update backup completed.</li>
+            </ol>
+          </details>
+
         </div>
       </section>
 
