@@ -15,7 +15,7 @@
 <div class="page">
   <header class="masthead">
     <p class="eyebrow">Home Lab — Built by Directing Claude</p>
-    <h1>Four subscriptions, replaced by one box on a shelf.</h1>
+    <h1>Five subscriptions, replaced by one box on a shelf.</h1>
     <p class="dek">I don't have a systems administrator's background. Claude does the parts that require one — every container, every monitor, every 3am backup script, built by describing what I wanted and deciding what was right, rather than by already knowing every command myself. This is the write-up of what that actually looked like: the hardware, the network, the storage, and the alarms that go off the instant something's wrong.</p>
     <div class="stats">
       <div class="stat"><div class="v">$0/mo</div><div class="l">recurring cost</div></div>
@@ -23,7 +23,7 @@
       <div class="stat"><div class="v">2C·4T</div><div class="l">CPU, 16GB RAM</div></div>
       <div class="stat"><div class="v">1TB + 1TB</div><div class="l">RAID1 + backup disk</div></div>
       <div class="stat"><div class="v">3 people</div><div class="l">onboarded to Nextcloud</div></div>
-      <div class="stat"><div class="v">4 subscriptions</div><div class="l">retired: Google One, iCloud, Dropbox, Quicken</div></div>
+      <div class="stat"><div class="v">5 subscriptions</div><div class="l">retired: Google One, iCloud, Dropbox, Quicken, Evernote</div></div>
       <div class="stat"><div class="v">Claude</div><div class="l">actual sysadmin on this project</div></div>
     </div>
   </header>
@@ -178,8 +178,8 @@
       </section>
 
       <section class="stage" id="outline">
-        <div class="stage-head"><span class="stage-num">08</span><h2>Outline: the Evernote killer (in progress)</h2></div>
-        <p>Subscription number five, mid-flight: a work team's shared knowledge base has been living in a shared Evernote plan, and this box is taking that over too — <strong>Outline</strong>, a self-hosted team wiki, fronted by <strong>Authentik</strong> for login since Outline ships with no username/password of its own, OIDC-only. Infrastructure's live as of this write-up; the actual notes haven't moved yet and the Evernote plan hasn't been cancelled — that's the next step, not this one. The header stat above still says four on purpose.</p>
+        <div class="stage-head"><span class="stage-num">08</span><h2>Outline: the Evernote killer</h2></div>
+        <p>Subscription number five: a work team's shared knowledge base had been living in a shared Evernote plan, and this box took it over — <strong>Outline</strong>, a self-hosted team wiki, fronted by <strong>Authentik</strong> for login since Outline ships with no username/password of its own, OIDC-only. Evernote is cancelled now, not just planned to be — $250/year that stops recurring the next renewal it would've hit.</p>
         <div class="spec">
           <div class="spec-title">Two stacks, six containers, one login</div>
           <div class="spec-scroll">
@@ -217,6 +217,7 @@
           <span class="tag">Claude gets a key to the wiki too</span>
           <p>Outline shipped a first-party MCP server in early 2026 — flip on <strong>Settings → AI → MCP</strong> and Claude can search, read, and write documents directly, no separate integration to build. Auth is per-user OIDC through the browser, same login every teammate already has, not one shared token — so Claude acting on the wiki is scoped to whatever that person could already see.</p>
         </div>
+        <p class="tight">Migration's done: all 5 Evernote notebooks — 483 notes total — converted and imported, each into its own private collection, access handed out group-by-group rather than one flat shared space. The largest single notebook was 415 notes deep and surfaced three real bugs a smaller test run never would have (API rate limits, Outline's 100-character title cap, a pagination bug in the migration script itself that quietly duplicated 86 already-imported notes on a resumed run) — every one caught by the same habit: re-scan everything for broken links and duplicate titles after the fact, rather than trust a clean-looking log.</p>
       </section>
 
       <section class="stage" id="monitoring">
