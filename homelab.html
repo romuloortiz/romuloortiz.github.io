@@ -38,11 +38,12 @@
       <a href="#nextcloud"><span class="n">06</span> Nextcloud</a>
       <a href="#firefly"><span class="n">07</span> Firefly III</a>
       <a href="#outline"><span class="n">08</span> Outline</a>
-      <a href="#monitoring"><span class="n">09</span> Alerting</a>
-      <a href="#backup"><span class="n">10</span> Backups</a>
-      <a href="#updates"><span class="n">11</span> Staying current</a>
-      <a href="#hardware"><span class="n">12</span> Physical maintenance</a>
-      <a href="#claude-payoff"><span class="n">13</span> Why this is an AI story</a>
+      <a href="#receipts"><span class="n">09</span> The receipts</a>
+      <a href="#monitoring"><span class="n">10</span> Alerting</a>
+      <a href="#backup"><span class="n">11</span> Backups</a>
+      <a href="#updates"><span class="n">12</span> Staying current</a>
+      <a href="#hardware"><span class="n">13</span> Physical maintenance</a>
+      <a href="#claude-payoff"><span class="n">14</span> Why this is an AI story</a>
     </nav>
 
     <main class="stages">
@@ -179,7 +180,7 @@
 
       <section class="stage" id="outline">
         <div class="stage-head"><span class="stage-num">08</span><h2>Outline: the Evernote killer</h2></div>
-        <p>Subscription number five: a work team's shared knowledge base had been living in a shared Evernote plan, and this box took it over — <strong>Outline</strong>, a self-hosted team wiki, fronted by <strong>Authentik</strong> for login since Outline ships with no username/password of its own, OIDC-only. Evernote is cancelled now, not just planned to be — $250/year that stops recurring the next renewal it would've hit.</p>
+        <p>Subscription number five: a work team's shared knowledge base had been living in a shared Evernote plan, and this box took it over — <strong>Outline</strong>, a self-hosted team wiki, fronted by <strong>Authentik</strong> for login since Outline ships with no username/password of its own, OIDC-only. Evernote is cancelled now, not just planned to be — full receipts on what that and the other four actually add up to are <a href="#receipts">below</a>.</p>
         <div class="spec">
           <div class="spec-title">Two stacks, six containers, one login</div>
           <div class="spec-scroll">
@@ -220,8 +221,27 @@
         <p class="tight">Migration's done: all 5 Evernote notebooks — 483 notes total — converted and imported, each into its own private collection, access handed out group-by-group rather than one flat shared space. The largest single notebook was 415 notes deep and surfaced three real bugs a smaller test run never would have (API rate limits, Outline's 100-character title cap, a pagination bug in the migration script itself that quietly duplicated 86 already-imported notes on a resumed run) — every one caught by the same habit: re-scan everything for broken links and duplicate titles after the fact, rather than trust a clean-looking log.</p>
       </section>
 
+      <section class="stage" id="receipts">
+        <div class="stage-head"><span class="stage-num">09</span><h2>The receipts</h2></div>
+        <p>Five sections up above each end with a tidy "and that killed subscription X" line, which is satisfying right up until someone (me) asks what those five subscriptions actually cost, all together, all at once. Nobody adds that up while it's still happening — you cancel them one at a time, months apart, and the total just sort of quietly stops existing. So here it is, itemized, receipts included, in the same spirit as the hardware build cost up in <a href="#machine">The machine</a>:</p>
+        <div class="spec">
+          <div class="spec-title">What this box actually stopped paying for, per year</div>
+          <div class="spec-scroll">
+            <table>
+              <tr><td>Google One</td><td>100GB "family" plan that wasn't fooling anyone about our actual photo-hoarding habit — one more group vacation from getting force-upgraded to the 200GB tier anyway</td><td>$29.99</td></tr>
+              <tr><td>iCloud</td><td>$0.99/mo, the toll for keeping one (1) eight-year-old's camera roll in Apple's good graces</td><td>$11.88</td></tr>
+              <tr><td>Quicken</td><td>Never once paid full price — whatever number Black Friday coughed up that particular year, somewhere between $30 and $40</td><td>$35.00</td></tr>
+              <tr><td>Evernote</td><td>$192 last year, $250 the year it finally got the axe — a subscription that ages like a gym membership, not wine</td><td>$250.00</td></tr>
+              <tr><td>Dropbox</td><td>Free tier — never technically "killed," just one fewer login to remember now that everything lives on Nextcloud</td><td>$0.00</td></tr>
+              <tr class="total"><td>Total</td><td></td><td>$326.87</td></tr>
+            </table>
+          </div>
+        </div>
+        <p class="tight">$326.87 a year in subscriptions, gone, against a box that costs roughly <a href="#nextcloud">$40 a year in electricity</a> to keep running. That's not a "well, it evens out eventually" pitch — that's an eight-to-one return before counting the fact that the box also does calendar sync, photo backup, a team wiki, and a personal finance manager none of those five subscriptions did all at once. Google One's row uses the $29.99 200GB price rather than the $19.99 we were actually paying, because the 100GB plan was already showing "storage almost full" warnings — that upgrade was a "when," not an "if." Same logic for Evernote: $250 is the number that would have actually hit the card, not the $192 from the year before. Dropbox doesn't add to the total — free is free — but it's on the list anyway, because "everything lives in one place now" is worth something even when that something is $0.00.</p>
+      </section>
+
       <section class="stage" id="monitoring">
-        <div class="stage-head"><span class="stage-num">09</span><h2>Alerting: three containers, three different questions</h2></div>
+        <div class="stage-head"><span class="stage-num">10</span><h2>Alerting: three containers, three different questions</h2></div>
         <p>A server nobody's watching is a server that fails silently, usually at the worst possible moment, usually right when you're bragging about it to someone. The three-tool split below wasn't a design I brought to Claude — it's the shape it proposed after being asked "how do I actually know if any of this breaks," and it's held up ever since. Three small containers each answer a different question, and all of them funnel into the same place:</p>
         <div class="spec">
           <div class="spec-title">Monitoring containers</div>
@@ -250,7 +270,7 @@
       </section>
 
       <section class="stage" id="backup">
-        <div class="stage-head"><span class="stage-num">10</span><h2>Backup strategy</h2></div>
+        <div class="stage-head"><span class="stage-num">11</span><h2>Backup strategy</h2></div>
         <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the two apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 1TB drive using <strong>restic</strong>:</p>
         <div class="spec">
           <div class="spec-title">Nightly backup sequence</div>
@@ -279,7 +299,7 @@
       </section>
 
       <section class="stage" id="updates">
-        <div class="stage-head"><span class="stage-num">11</span><h2>Staying current: six update systems, one push</h2></div>
+        <div class="stage-head"><span class="stage-num">12</span><h2>Staying current: six update systems, one push</h2></div>
         <p>A server that's up doesn't mean a server that's current — it just means it's up, quietly getting older and more vulnerable while looking perfectly fine from the outside. OS packages, two hand-installed CLI tools, eight Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks. Consolidating six unrelated update stories into one daily push was Claude's idea, not a design I brought to it — the ask was simply "tell me if anything on this box needs attention," and what came back was an actual system, not just a cron job.</p>
         <div class="spec">
           <div class="spec-title">What the 8am job checks</div>
@@ -461,7 +481,7 @@
       </section>
 
       <section class="stage" id="hardware">
-        <div class="stage-head"><span class="stage-num">12</span><h2>Physical maintenance: shutting the box down safely</h2></div>
+        <div class="stage-head"><span class="stage-num">13</span><h2>Physical maintenance: shutting the box down safely</h2></div>
         <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — at some point you have to actually crack the case open, which means the box has to come down for real, and "unplug it and hope" is not a runbook. That's a different problem: nine containers across three stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process — authored by Claude in the same "one-shot, human-invoked, self-verifying" shape as the update skills, precisely because a real power-down was the one operation on this whole box where getting the order of steps wrong could actually lose data:</p>
         <div class="runbook">
 
@@ -503,7 +523,7 @@
       </section>
 
       <section class="stage" id="claude-payoff">
-        <div class="stage-head"><span class="stage-num">13</span><h2>Why this is an AI story, not a sysadmin story</h2></div>
+        <div class="stage-head"><span class="stage-num">14</span><h2>Why this is an AI story, not a sysadmin story</h2></div>
         <p>If you're reading this because your own team is being asked to show a real win from working with AI, here's mine, stated plainly: a systems administrator's job — the part that used to require years of hands-on Linux experience to even attempt safely — got done, to production standards, in a couple of weeks, because I set the direction and Claude filled the technical gap instead of gatekeeping behind it. Not a toy demo, not a script it generated once and left me to debug alone. An actual home lab, actually running, actually monitored, actually backed up, for actual money spent (see: $257.97, receipts included above).</p>
         <div class="callout">
           <span class="tag">Repeated processes become skills, not scripts</span>
