@@ -271,7 +271,7 @@
 
       <section class="stage" id="backup">
         <div class="stage-head"><span class="stage-num">11</span><h2>Backup strategy</h2></div>
-        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the two apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 1TB drive using <strong>restic</strong>:</p>
+        <p>Nightly at 3am, a script Claude wrote, tested, and then explained back line by line — until "trust me it works" turned into "I actually understand why it works" — covers every stateful service on the box, not just the apps with irreplaceable user data: <a href="#nextcloud">Nextcloud</a>'s files and database, <a href="#firefly">Firefly III</a>'s uploaded attachments and database, <a href="#outline">Outline</a>'s wiki attachments and Postgres database, <strong>Authentik</strong>'s config and its own Postgres database, and the entire monitoring stack's configuration — ntfy's subscriptions, Beszel's dashboard config, Uptime Kuma's monitor history — each kept separate on purpose, to the dedicated 1TB drive using <strong>restic</strong>:</p>
         <div class="spec">
           <div class="spec-title">Nightly backup sequence</div>
           <div class="spec-scroll">
@@ -282,18 +282,28 @@
               <tr><td>4</td><td><code>mysqldump</code> the Firefly III database to a fixed filename</td></tr>
               <tr><td>5</td><td><code>restic backup</code> Firefly's uploaded attachments on the RAID (tagged separately)</td></tr>
               <tr><td>6</td><td><code>restic backup</code> the Firefly database dump (tagged separately)</td></tr>
-              <tr><td>7</td><td><code>restic backup</code> ntfy's subscription/topic state (tagged separately)</td></tr>
-              <tr><td>8</td><td><code>restic backup</code> Beszel's dashboard config and history (tagged separately, excluding the agent's own SSH private key — see below)</td></tr>
-              <tr><td>9</td><td><code>restic backup</code> Uptime Kuma's monitor config and history (tagged separately)</td></tr>
-              <tr><td>10</td><td><code>restic forget --prune</code> — keep 7 daily / 4 weekly / 6 monthly, across all seven categories</td></tr>
-              <tr><td>11</td><td>One ntfy notification with all seven sizes, success or fail</td></tr>
+              <tr><td>7</td><td><code>pg_dump</code> Outline's database — Postgres, not MariaDB, first time this script needed a different dump tool</td></tr>
+              <tr><td>8</td><td><code>restic backup</code> Outline's wiki attachments, migrated onto the RAID specifically so this backup user could read them (tagged separately)</td></tr>
+              <tr><td>9</td><td><code>restic backup</code> the Outline database dump (tagged separately)</td></tr>
+              <tr><td>10</td><td><code>pg_dump</code> Authentik's database</td></tr>
+              <tr><td>11</td><td><code>restic backup</code> Authentik's config/media directory (tagged separately)</td></tr>
+              <tr><td>12</td><td><code>restic backup</code> the Authentik database dump (tagged separately)</td></tr>
+              <tr><td>13</td><td><code>restic backup</code> ntfy's subscription/topic state (tagged separately)</td></tr>
+              <tr><td>14</td><td><code>restic backup</code> Beszel's dashboard config and history (tagged separately, excluding the agent's own SSH private key — see below)</td></tr>
+              <tr><td>15</td><td><code>restic backup</code> Uptime Kuma's monitor config and history (tagged separately)</td></tr>
+              <tr><td>16</td><td><code>restic forget --prune</code>, across all eleven categories</td></tr>
+              <tr><td>17</td><td>One ntfy notification with all eleven sizes plus the backup drive's own usage, success or fail</td></tr>
             </table>
           </div>
         </div>
-        <p class="tight">Splitting each source into its own restic call means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — every new service (Firefly, then later the monitoring stack) meant extending the existing run rather than standing up a parallel backup system for it, which is exactly the instinct that keeps "one script that covers everything" from quietly turning into "five scripts, three of which nobody remembers to check."</p>
+        <p class="tight">Splitting each source into its own restic call means the morning notification can report a size for each independently — useful for noticing, at a glance, if a database dump quietly went to zero bytes while its file backup looked fine. Restic deduplicates block-level, so even though the notification always shows the <em>full</em> current size of each source, the actual bytes written to the backup drive each night are just what changed. One script, one schedule, one consolidated notification — every new service (Firefly, then the monitoring stack, then Outline and Authentik) meant extending the existing run rather than standing up a parallel backup system for it, which is exactly the instinct that keeps "one script that covers everything" from quietly turning into "five scripts, three of which nobody remembers to check."</p>
         <div class="callout">
           <span class="tag">One deliberate exclusion, not an oversight</span>
           <p>Beszel's data directory holds one file the backup user can't read: the beszel-agent's own SSH private key, root-owned at mode 600. Backing it up wasn't worth loosening its permissions for — losing it just means the agent container re-provisions a new one on next start, not real data loss — so it's explicitly excluded rather than silently failing the whole backup over one unreadable file restic would otherwise choke on.</p>
+        </div>
+        <div class="callout alert">
+          <span class="tag">Retention is temporarily bare-minimum, and the notification says so</span>
+          <p>The steady-state policy is 7 daily / 4 weekly / 6 monthly snapshots, kept across all eleven categories — but as of this writing that's dialed down to a bare <code>keep-daily 2</code>, no weekly or monthly at all, because the backup drive is sitting close enough to full that a normal night's incremental was blowing past what was left. A replacement 1TB drive is already in transit; this is a deliberate, temporary trade of restore depth for not failing outright, not a config left half-finished. The nightly notification now also reports the backup drive's own used/available/percent every single run, specifically so this doesn't quietly become a permanent state nobody notices.</p>
         </div>
         <p class="tight">This replaced a setup that was, honestly, just RAID1 — which only protects against a single disk dying, not against a fat-fingered delete or a ransomware scenario, both of which this restic setup now actually covers via retained snapshots. "I have RAID1" is not a backup strategy, it's a very expensive way to still lose everything with extra steps and a false sense of security — a distinction Claude drew early and that reshaped the whole approach. A true offsite third copy — pushed to a remote machine over Tailscale, for a textbook 3‑2‑1 — was considered and deliberately shelved rather than left as an oversight: the remaining gap is a scenario like a house fire taking out the RAID and the backup drive together, and at that point the missing hard drive is not going to be the priority. Local RAID1 plus a dedicated backup drive is judged sufficient for the actual cost-vs-risk tradeoff here.</p>
       </section>
