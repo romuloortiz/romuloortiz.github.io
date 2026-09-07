@@ -192,7 +192,7 @@
             </table>
           </div>
         </div>
-        <p class="tight">Attachments live on a local Docker volume rather than S3/MinIO — Outline supports plain local-disk storage now, which meant one less container than originally planned.</p>
+        <p class="tight">Attachments use plain local-disk storage rather than S3/MinIO — Outline supports that natively now, which meant one less container than originally planned. That storage started out as a Docker-managed volume, which turned out to be its own small problem: see <a href="#backup">Backup strategy</a> for why it had to move onto the RAID before it could be backed up at all.</p>
         <div class="callout alert">
           <span class="tag">A field that didn't exist in the docs I'd read</span>
           <p>First login attempt failed with Authentik logging <code>Invalid grant_type for provider</code> — not a typo in the redirect URI or a bad client secret, but an empty <code>grant_types</code> allowlist on the OAuth2 provider that this Authentik version defaults to <em>blocking everything</em> rather than allowing the standard authorization-code flow. Nothing in the setup guides I'd checked mentioned it; found it by reading Authentik's own request logs line by line rather than trusting the generic "malformed request" error the browser would have shown. Patched to explicitly allow <code>authorization_code</code> + <code>refresh_token</code> and the same redirect that failed a minute earlier sailed straight through to the real login page.</p>
@@ -248,7 +248,7 @@
           <div class="spec-scroll">
             <table>
               <tr><td>Beszel</td><td>Is the hardware healthy? — CPU, RAM, disk, temperature, per‑container stats</td></tr>
-              <tr><td>Uptime Kuma</td><td>Are the apps actually working? — 6 container checks, 3 real HTTP health‑check queries, 1 outbound ping to tell "server's down" apart from "internet's down"</td></tr>
+              <tr><td>Uptime Kuma</td><td>Are the apps actually working? — 15 container checks, 6 real HTTP health‑check queries, 1 outbound ping to tell "server's down" apart from "internet's down"</td></tr>
               <tr><td>ntfy</td><td>The delivery pipe — the one channel every alert, from either tool (or a cron job), gets pushed through</td></tr>
             </table>
           </div>
@@ -261,7 +261,7 @@
         <p class="tight">ntfy itself is self-hosted with no public address, so the phone subscribes to it over the tailnet's private hostname. The one subtlety: getting real background push on iOS required routing through the public <code>ntfy.sh</code> purely as a relay to wake Apple's push service — a self-hosted server has no way to talk to APNs directly, so ntfy.sh does that one hop on its behalf while every actual message still originates and stays on the home server. This is the kind of platform-specific wrinkle that would've cost real research time to even know existed; Claude flagged it before the push notifications ever failed to arrive, not after.</p>
         <div class="callout">
           <span class="tag">Cron-driven, on purpose split two ways</span>
-          <p>An 8am job bundles six separate staleness checks — OS packages and a pending-reboot flag, plus four more added later (see <a href="#updates">Staying current</a>, below) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
+          <p>An 8am job bundles eight separate staleness (and one disk-space) checks — OS packages and a pending-reboot flag, plus six more added since (see <a href="#updates">Staying current</a>, below) — and stays <em>silent</em> if there's nothing to report, so a clear box doesn't turn into a daily "all good!" ping nobody reads. A 3am backup job does the opposite: it sends exactly one notification every single morning, success or failure, because for a backup, silence is ambiguous rather than reassuring — you want to know it ran, not just assume it did.</p>
         </div>
         <div class="callout">
           <span class="tag">What this actually gets you</span>
@@ -309,17 +309,19 @@
       </section>
 
       <section class="stage" id="updates">
-        <div class="stage-head"><span class="stage-num">12</span><h2>Staying current: six update systems, one push</h2></div>
-        <p>A server that's up doesn't mean a server that's current — it just means it's up, quietly getting older and more vulnerable while looking perfectly fine from the outside. OS packages, two hand-installed CLI tools, eight Docker images, and Nextcloud's own app store all drift out of date on six completely independent clocks. Consolidating six unrelated update stories into one daily push was Claude's idea, not a design I brought to it — the ask was simply "tell me if anything on this box needs attention," and what came back was an actual system, not just a cron job.</p>
+        <div class="stage-head"><span class="stage-num">12</span><h2>Staying current: eight checks, one push</h2></div>
+        <p>A server that's up doesn't mean a server that's current — it just means it's up, quietly getting older and more vulnerable while looking perfectly fine from the outside. OS packages, two hand-installed CLI tools, thirteen Docker images (a pinned-version app that skips the image check entirely gets its own release check instead), Nextcloud's own app store, and — since it's the same daily cron either way — a disk-space watch that isn't really an "update" check at all, just a problem worth catching the same way. Consolidating that many unrelated staleness stories into one daily push was Claude's idea, not a design I brought to it — the ask was simply "tell me if anything on this box needs attention," and what came back was an actual system, not just a cron job.</p>
         <div class="spec">
           <div class="spec-title">What the 8am job checks</div>
           <div class="spec-scroll">
             <table>
               <tr><td>OS packages</td><td><code>apt list --upgradable</code> — names each package and its version transition, not just a count</td></tr>
               <tr><td>Pending reboot</td><td><code>/var/run/reboot-required</code> present</td></tr>
+              <tr><td>RAID data disk</td><td>usage percent on <code>/mnt/external_raid</code> — Beszel's own disk alert only watches the root filesystem, so this mount had no coverage at all otherwise</td></tr>
               <tr><td>CLI tool</td><td><code>npm outdated -g</code> for gemini-cli — not apt-managed, needs its own check</td></tr>
               <tr><td>Claude Code itself</td><td>installed version vs. <code>npm view @anthropic-ai/claude-code version</code> — Anthropic's native installer isn't apt- or npm-managed either, but the npm registry's published version tracks it 1:1; the tool that runs this whole homelab checks its own freshness alongside everything else it maintains</td></tr>
-              <tr><td>8 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes; now covers Firefly III's app + DB too</td></tr>
+              <tr><td>Authentik</td><td>current pinned version vs. GitHub's latest release — Authentik doesn't float on <code>:latest</code> the way everything else does, so it needed its own release-comparison check rather than a digest diff</td></tr>
+              <tr><td>13 container images</td><td>local vs. registry digest — catches a rebuilt <code>:latest</code> even when the tag string never changes; grew from 8 to 13 as Firefly's cron sidecar and Outline's three containers joined the fleet</td></tr>
               <tr><td>Nextcloud apps</td><td><code>occ update:check</code> inside the container — apps version through the app store, not the image</td></tr>
             </table>
           </div>
@@ -492,7 +494,7 @@
 
       <section class="stage" id="hardware">
         <div class="stage-head"><span class="stage-num">13</span><h2>Physical maintenance: shutting the box down safely</h2></div>
-        <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — at some point you have to actually crack the case open, which means the box has to come down for real, and "unplug it and hope" is not a runbook. That's a different problem: nine containers across three stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process — authored by Claude in the same "one-shot, human-invoked, self-verifying" shape as the update skills, precisely because a real power-down was the one operation on this whole box where getting the order of steps wrong could actually lose data:</p>
+        <p>Every update runbook above assumes the machine stays powered on. A RAM upgrade doesn't — at some point you have to actually crack the case open, which means the box has to come down for real, and "unplug it and hope" is not a runbook. That's a different problem: fifteen containers across five stacks, a RAID enclosure and a backup drive that both need to come back mounted, and a nightly backup job that isn't even a container. Two runbooks now bracket that process — authored by Claude in the same "one-shot, human-invoked, self-verifying" shape as the update skills, precisely because a real power-down was the one operation on this whole box where getting the order of steps wrong could actually lose data:</p>
         <div class="runbook">
 
           <details>
@@ -500,8 +502,8 @@
             <ol>
               <li>Check for a live backup — the nightly restic run is a host cron job, not a container, so <code>docker ps</code> and <code>docker compose down</code> are both blind to it. Shutting down mid-backup is a real way to get a half-written repo.</li>
               <li>Confirm both external mounts (RAID data volume, USB backup drive) are actually present before touching anything.</li>
-              <li>Pause the 7 Uptime Kuma monitors watching Nextcloud and Firefly — they'd otherwise sit in a "pending" state while those containers stop, with a real (if narrow) chance of escalating into a false alert (see callout below).</li>
-              <li><code>docker compose down</code> all three stacks — Nextcloud, Firefly III, monitoring — in that order.</li>
+              <li>Pause the 15 Uptime Kuma monitors watching Nextcloud, Firefly, Outline, and Authentik — they'd otherwise sit in a "pending" state while those containers stop, with a real (if narrow) chance of escalating into a false alert (see callout below).</li>
+              <li><code>docker compose down</code> each of the five stacks — Nextcloud, Firefly III, Outline, Authentik, monitoring — in that order.</li>
               <li>Confirm nothing's left in <code>docker ps</code>, then hand off: the actual <code>sudo shutdown</code> has to be run by hand in its own terminal, since sudo has no controlling TTY through an automated session here (same quirk noted under Firefly III, above).</li>
             </ol>
           </details>
@@ -510,9 +512,9 @@
             <summary><span class="cmd">/post-restart-sequence</span><span class="desc">after the power comes back</span><span class="badges"><span class="chev">▸</span></span></summary>
             <ol>
               <li>Check both external mounts remounted <em>before</em> starting any container — starting Nextcloud against an empty mountpoint would look like a clean boot while quietly serving no data.</li>
-              <li><code>docker compose up -d</code> all three stacks — they were <code>down</code>ed, not just stopped, so nothing restarts on its own.</li>
-              <li>Health-check each service the same way the update runbooks do: <code>occ status</code>, the Firefly <code>/health</code> endpoint, container status for the rest.</li>
-              <li>Resume the same 7 Kuma monitors once Nextcloud and Firefly are confirmed healthy — they stay paused across the reboot otherwise, since Kuma's data survives on a bind mount.</li>
+              <li><code>docker compose up -d</code> each of the five stacks — Nextcloud, Firefly III, Authentik, Outline, monitoring, in that order this time: Authentik before Outline, since Outline's login needs it reachable, the reverse of shutdown order. They were <code>down</code>ed, not just stopped, so nothing restarts on its own.</li>
+              <li>Health-check each service the same way the update runbooks do: <code>occ status</code>, the Firefly <code>/health</code> endpoint, Authentik's <code>/-/health/ready/</code>, a <code>200</code> from Outline, container status for the rest.</li>
+              <li>Resume the same 15 Kuma monitors once every app is confirmed healthy — they stay paused across the reboot otherwise, since Kuma's data survives on a bind mount.</li>
               <li>After a RAM upgrade specifically, <code>free -h</code> to confirm the new total actually shows up.</li>
             </ol>
           </details>
@@ -528,7 +530,7 @@
         </div>
         <div class="callout alert">
           <span class="tag">Debugging story — the monitor that watched its own shutdown, then couldn't tell anyone</span>
-          <p>Expected Uptime Kuma to light up the phone during the first real shutdown; it didn't, just a few yellow squares. Turned out every monitor needs 5 consecutive failed checks a minute apart — about 5 minutes — before Kuma calls something actually down and fires a notification. The Nextcloud and Firefly containers each failed exactly once before Kuma's own container went down seconds later as part of the same monitoring stack shutdown, so nothing ever crossed the threshold. A monitor can't escalate an alert about an outage it's no longer running to witness. Beszel turned out to have real alert rules too (a correction to what this page used to say about it, caught by double-checking rather than assuming the earlier writeup was still accurate), with an even longer 10-minute grace period on host-down — but nothing it watches goes down before its own hub does, so it was never at risk the way Kuma was. Fix: both runbooks above now explicitly pause and resume just the 7 monitors that watch services stopped individually, ahead of the stack that watches them.</p>
+          <p>Expected Uptime Kuma to light up the phone during the first real shutdown; it didn't, just a few yellow squares. Turned out every monitor needs 5 consecutive failed checks a minute apart — about 5 minutes — before Kuma calls something actually down and fires a notification. The Nextcloud and Firefly containers each failed exactly once before Kuma's own container went down seconds later as part of the same monitoring stack shutdown, so nothing ever crossed the threshold. A monitor can't escalate an alert about an outage it's no longer running to witness. Beszel turned out to have real alert rules too (a correction to what this page used to say about it, caught by double-checking rather than assuming the earlier writeup was still accurate), with an even longer 10-minute grace period on host-down — but nothing it watches goes down before its own hub does, so it was never at risk the way Kuma was. Fix: both runbooks above now explicitly pause and resume just the monitors that watch services stopped individually, ahead of the stack that watches them — 7 at the time this was first caught, grown to 15 since Outline and Authentik joined.</p>
         </div>
       </section>
 
