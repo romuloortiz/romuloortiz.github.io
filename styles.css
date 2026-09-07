@@ -11,6 +11,8 @@
   --accent-ink: #0F4E64;
   --alert: #B4771A;
   --alert-soft: rgba(180,119,26,0.10);
+  --cost: #B33F3F;
+  --savings: #2E8B57;
   --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -29,6 +31,8 @@
     --accent-ink: #B8E4F2;
     --alert: #E0A64A;
     --alert-soft: rgba(224,166,74,0.13);
+    --cost: #E2827E;
+    --savings: #6FCF97;
   }
 }
 :root[data-theme="dark"] {
@@ -44,6 +48,8 @@
   --accent-ink: #B8E4F2;
   --alert: #E0A64A;
   --alert-soft: rgba(224,166,74,0.13);
+  --cost: #E2827E;
+  --savings: #6FCF97;
 }
 
 * { box-sizing: border-box; }
@@ -135,6 +141,8 @@ h1, h2, h3 { font-family: var(--font-sans); font-weight: 700; text-wrap: balance
   color: var(--text-faint);
   margin-top: 2px;
 }
+.stat.cost .v { color: var(--cost); }
+.stat.savings .v { color: var(--savings); }
 
 /* ---------- index page: entry list ---------- */
 .entries {
